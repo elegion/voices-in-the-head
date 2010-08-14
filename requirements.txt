@@ -1,1 +1,6 @@
 Django==1.2.1
+
+#just to determine MP3 file duration :D
+hachoir-metadata
+hachoir-parse
+hachoir-core

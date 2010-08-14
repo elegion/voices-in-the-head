@@ -28,7 +28,7 @@ class Track(models.Model):
     uploader = models.ForeignKey(Uploader, null=True)
     
     play_time = models.DateTimeField(null=True, blank=True)
-    uploaded = models.DateTimeField(auto_now_add=True)
+    uploaded = models.DateTimeField(null=True, blank=True, auto_now_add=True)
         
     class Meta(object):
         get_latest_by = 'play_time'
@@ -36,7 +36,7 @@ class Track(models.Model):
         
     def __unicode__(self):
         return '%(name)s, %(length)ss from %(uploader)s' % {'name': self.name, 'length': self.length,\
-            'uploader': self.uploader.twitter}
+            'uploader': self.uploader}
 
     def as_dict(self):
         tdict = model_to_dict(self)
@@ -49,6 +49,9 @@ class Track(models.Model):
         Calc playtime on track saving.
         FIXME: No thread safe :)
         """
+        if not self.length and self.track_file:
+            self.length = self.track_file._duration
+            
         if not self.play_time:
             try:
                 last = Track.objects.latest('play_time')
