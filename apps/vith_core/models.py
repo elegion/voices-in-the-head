@@ -21,6 +21,15 @@ class Uploader(models.Model):
         return '@%s' % self.twitter
 
 
+class TrackManager(models.Manager):
+    def current_track(self, time):
+        try:
+            return Track.objects.filter(play_time__lte=time) \
+                                .order_by('-play_time')[0]
+        except IndexError:
+            raise Track.DoesNotExist
+
+
 class Track(models.Model):
     track_file = AudioFileField(format='mp3', bitrate=196,
                                 normalize=NORMALIZE,
@@ -32,6 +41,8 @@ class Track(models.Model):
 
     play_time = models.DateTimeField(null=True, blank=True)
     uploaded = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+
+    objects = TrackManager()
 
     class Meta(object):
         get_latest_by = 'play_time'

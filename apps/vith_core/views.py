@@ -20,8 +20,11 @@ def now_playing(request):
     FIXME synchronize with audio streamer
     """
     now = datetime.datetime.now()
-    curr_track = Track.objects.filter(play_time__lte=now)\
-        .order_by('-play_time')[0]
+    try:
+        curr_track = Track.objects.current_track(now)
+    except Track.DoesNotExist:
+        return JsonResponse('')
+
     if curr_track:
         curr_pos = (now - curr_track.play_time).seconds
 
