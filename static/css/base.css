@@ -1,0 +1,22 @@
+html, body {
+    background: #fff;
+    color: #000;
+    font-size: 12pt;
+}
+
+#layout_main {
+    width: 800px;
+
+    margin: 0 auto;
+    padding: 10px 0;
+}
+
+#layout_header {
+
+}
+    #layout_header .logo {
+        display: inline-block;
+        width: 200px;
+        height: 71px;
+        background: transparent url(../imgs/logo.png) no-repeat 0 0;
+    }
