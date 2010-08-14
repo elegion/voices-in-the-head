@@ -31,4 +31,4 @@ def upload(request):
     return JsonResponse({
         'status': 'error',
         'errors': dict(form.errors)
-    });
+    })

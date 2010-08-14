@@ -1,8 +1,8 @@
 import datetime, os
 
+from django.conf import settings
 from django.db import models
 from django.forms.models import model_to_dict
-from django.conf import settings
 
 
 from core import datetime_to_timestamp
@@ -29,16 +29,20 @@ class Track(models.Model):
     
     play_time = models.DateTimeField(null=True, blank=True)
     uploaded = models.DateTimeField(auto_now_add=True)
+        
+    class Meta(object):
+        get_latest_by = 'play_time'
+        ordering = ['play_time', 'uploaded']
+        
+    def __unicode__(self):
+        return '%(name)s, %(length)ss from %(uploader)s' % {'name': self.name, 'length': self.length,\
+            'uploader': self.uploader.twitter}
 
     def as_dict(self):
         tdict = model_to_dict(self)
         tdict['track_file'] = tdict['track_file'].name
         tdict['play_time'] = datetime_to_timestamp(tdict['play_time'])
         return tdict
-
-    def __unicode__(self):
-        return '%(name)s, %(length)ss from %(uploader)s' % {'name': self.name, 'length': self.length,\
-            'uploader': self.uploader.twitter}
 
     def save(self, *args, **kwargs):
         """
