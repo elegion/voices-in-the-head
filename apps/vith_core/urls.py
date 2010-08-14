@@ -3,5 +3,6 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('vith_core.views',
     url('^tracks/$', 'tracks'),
-    url('^upload/$', 'upload'),
+    url('^now_playing/$', 'now_playing'),
+    url('^upload/$', 'upload'),    
 )

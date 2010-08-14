@@ -14,6 +14,27 @@ def tracks(request):
     return JsonResponse([t.as_dict() for t in tracks])
 
 
+def now_playing(request):
+    """
+    Returns current track and now playing position
+    FIXME synchronize with audio streamer
+    """    
+    now = datetime.datetime.now()
+    curr_track = Track.objects.filter(play_time__lte=now)\
+        .order_by('-play_time')[0]
+    if curr_track:
+        curr_pos = (now - curr_track.play_time).seconds
+        
+    if curr_pos > curr_track.length:
+        data = []
+    else:
+        tdata = curr_track.as_dict()
+        tdata['position'] = curr_pos
+        data = [tdata]
+    
+    return JsonResponse(data)
+    
+
 def upload(request):
     """
     Uploads and enqueues track
