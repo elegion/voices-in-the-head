@@ -9,9 +9,12 @@
 
     <link rel="stylesheet" href="/css/reset.css" type="text/css" />
     <link rel="stylesheet" href="/css/base.css" type="text/css" />
+    <link rel="stylesheet" href="/css/uploadify.css" type="text/css" />
     <link rel="stylesheet" href="/css/print.css" type="text/css" />
-
+    
     <script type="text/javascript" src="/js/jquery-1.4.2.js"></script>
+    <script type="text/javascript" src="/js/swfobject.js"></script>
+    <script type="text/javascript" src="/js/jquery.uploadify.v2.1.0.js"></script>
     <script type="text/javascript" src="/js/base.js"></script>
 
     <title>{%block title %}Voices in the head{% endblock %}</title>
@@ -26,12 +29,12 @@
             </div>
             
             <div class="playlist_wrapper" id="js_playlist_wrapper">
-            <div class="ajax_loader"></div>            
-            <ul class="playlist" id="js_playlist">{% spaceless %}                
-            {% endspaceless %}</ul></div>
+                <div class="ajax_loader"></div>
+                <ul class="playlist" id="js_playlist"></ul>
+            </div>
 
             <div class="upload_controls">
-                <a class="upload"></a><a class="rec"></a>
+                <a id='btn_upload' class="upload"></a><a class="rec"></a>
             </div>
 
         </div>
