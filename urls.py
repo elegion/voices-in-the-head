@@ -6,7 +6,7 @@ admin.autodiscover()
 
 
 urlpatterns = patterns('',
-    (r'^(?P<path>.*\.(js|gm4ie|css|xls|ico|png|gif|jpg|doc|xpi|rdf|exe|msi|crx|xml))$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
+    (r'^(?P<path>.*\.(js|css|xls|ico|png|gif|jpg|doc|xpi|rdf|exe|swf|msi|crx|xml))$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
 
     (r'^admin/', include(admin.site.urls)),
     (r'^', include('vith_core.urls')),

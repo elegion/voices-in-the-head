@@ -12,6 +12,10 @@ html, body {
     font-family: Arial,Helvetica,Garuda,sans-serif;
 }
 
+strong {
+    font-weight: bold;
+}
+
 /*	2. Layout */
 #layout_main {
     width: 800px;
@@ -149,13 +153,17 @@ html, body {
 .upload_controls {
     margin: 368px 0 0 0;
 }
-    .upload_controls .upload {
+    .upload_controls .upload,
+    .upload_controls #btn_uploadUploader {
         width: 108px;
         height: 32px;
 
         display: inline-block;
 
         background: transparent url(../imgs/btn_upload.png) no-repeat 0 0;
+    }
+    .upload_controls #btn_uploadUploader {
+        margin: 0 -1px 0 0;
     }
         .upload_controls .upload:hover {
             background-image: url(../imgs/btn_upload_hover.png);
@@ -171,3 +179,7 @@ html, body {
         .upload_controls .rec:hover {
             background-image: url(../imgs/btn_rec_hover.png);
         }
+
+.uploadifyQueue {
+    position: absolute;
+}
