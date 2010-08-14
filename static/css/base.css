@@ -67,7 +67,7 @@ strong {
     display: none;
     width: 370px;
     height: 400px;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: hidden;
     float: right;
 
