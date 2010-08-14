@@ -1,12 +1,10 @@
 import datetime
-from time import mktime
 
-from django.utils import simplejson as json
-from django.http import HttpResponse
 from django.forms.models import model_to_dict
 
+from core import JsonResponse, datetime_to_timestamp
+from vith_core.forms import UploadForm
 from vith_core.models import Track
-from core import datetime_to_timestamp
 
 
 def tracks(request):
@@ -21,4 +19,25 @@ def tracks(request):
         tdict['play_time'] = datetime_to_timestamp(tdict['play_time'])
         data.append(tdict)
     
-    return HttpResponse(json.dumps(data))#mimetype='application/json'
+    return JsonResponse(data)
+
+
+def upload(request):
+    """
+    Uploads and enqueues track
+    """
+    form = UploadForm(request.POST, request.FILES)
+    if form.is_valid():
+        track = form.save(commit=False)
+        track.length = 0
+        track.save()
+        return JsonResponse({
+            'status': 'ok',
+            'name': track.name,
+            'length': track.length
+        })
+    
+    return JsonResponse({
+        'status': 'error',
+        'errors': dict(form.errors)
+    });
