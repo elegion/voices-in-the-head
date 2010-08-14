@@ -1,22 +1,159 @@
+/**************************** Table of Contents ********************************
+/*	1. General tags
+/*	2. Layout
+/*  3. Main page
+/******************************************************************************/
+
+/*	1. General tags */
 html, body {
     background: #fff;
     color: #000;
     font-size: 12pt;
+    font-family: Arial,Helvetica,Garuda,sans-serif;
 }
 
+/*	2. Layout */
 #layout_main {
     width: 800px;
 
     margin: 0 auto;
-    padding: 10px 0;
 }
 
 #layout_header {
-
+    margin: 10px 0;
+    overflow: hidden;
 }
     #layout_header .logo {
-        display: inline-block;
         width: 200px;
         height: 71px;
+
+        display: inline-block;
+        vertical-align: middle;
+
         background: transparent url(../imgs/logo.png) no-repeat 0 0;
     }
+#layout_content {
+    width: 100%;
+    overflow: hidden;
+}
+#layout_footer {
+    margin: 10px 0;
+    text-align: center;
+}
+
+/*  3. Main page */
+.player_wrapper {
+    float: left;
+}
+
+.playlist {
+    width: 370px;
+    height: 400px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    float: right;
+
+    line-height: 32px;
+}
+    .playlist .even {
+        background: #f5f5f5;
+    }
+        .playlist .even .track q {
+            background-image: url(../imgs/fade_to_bg_even.png);
+        }
+    .playlist .odd {
+
+    }
+    .playlist .track {
+        width: 230px;
+        margin: 0 0 0 6px;
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        vertical-align: middle;
+        position: relative;
+    }
+        .playlist .track q {
+            width: 16px;
+            height: 32px;
+            position: absolute;
+            right: 0;
+            vertical-align: middle;
+            background: transparent url(../imgs/fade_to_bg.png) no-repeat 0 0;
+        }
+    .playlist .duration {
+        margin: 0 6px 0 0;
+        float: right;
+        color: #5b444c;
+    }
+    .playlist .progress {
+        width: 100%;
+        height: 4px;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        displayu: block;
+        background: #aaa;
+    }
+        .playlist .progress span {
+            height: 4px;
+            display: block;
+            background: #777;
+        }
+
+    .playlist .control {
+        height: 24px;
+        display: inline-block;
+        background: transparent none no-repeat 0 0;
+        cursor: pointer;
+        vertical-align: middle;
+    }
+    .playlist .play {
+        width: 26px;
+        background-image: url(../imgs/btn_play.png);
+    }
+        .playlist .play:hover {
+            background-image: url(../imgs/btn_play_hover.png);
+        }
+    .playlist .pause {
+        width: 26px;
+        background-image: url(../imgs/btn_pause.png);
+    }
+        .playlist .pause:hover {
+            background-image: url(../imgs/btn_pause_hover.png);
+        }
+    .playlist .delete {
+        width: 25px;
+        margin: 4px 0 0 0;
+        background-image: url(../imgs/btn_delete.png);
+        float: right;
+    }
+        .playlist .delete:hover {
+            background-image: url(../imgs/btn_delete_hover.png);
+        }
+
+.upload_controls {
+    margin: 368px 0 0 0;
+}
+    .upload_controls .upload {
+        width: 108px;
+        height: 32px;
+
+        display: inline-block;
+
+        background: transparent url(../imgs/btn_upload.png) no-repeat 0 0;
+    }
+        .upload_controls .upload:hover {
+            background-image: url(../imgs/btn_upload_hover.png);
+        }
+    .upload_controls .rec {
+        width: 46px;
+        height: 32px;
+
+        display: inline-block;
+
+        background: transparent url(../imgs/btn_rec.png) no-repeat 0 0;
+    }
+        .upload_controls .rec:hover {
+            background-image: url(../imgs/btn_rec_hover.png);
+        }
