@@ -1,10 +1,46 @@
 from django.db import models
 from django.db.models.fields.files import FieldFile
+from django import forms
 from django.core.files import File
 from django.core import signals
+from django.utils.translation import ugettext_lazy as _
 
-from hachoir_parser import createParser
+from hachoir_parser import createParser, guessParser
 from hachoir_metadata import extractMetadata
+from hachoir_core.stream import InputIOStream
+
+
+class AudioField(forms.FileField):
+    default_error_messages = {
+        'invalid_format': _(u"Upload a valid mp3-file. The file you uploaded was either not an mp3 or a corrupted mp3."),
+    }
+
+    def to_python(self, data):
+        f = super(AudioField, self).to_python(data)
+        if f is None:
+            return None
+
+        if hasattr(data, 'temporary_file_path'):
+            file = open(data.temporary_file_path(), 'rb')
+        else:
+            if hasattr(data, 'read'):
+                file = StringIO(data.read())
+            else:
+                file = StringIO(data['content'])
+
+        try:            
+            parser = guessParser(InputIOStream(file))
+            parser.validate()
+            
+            if not (parser.validate() or parser.mime_type != u'audio/mpeg'):
+                raise Exception
+        except ImportError:
+            raise
+        except Exception: #not an mp3
+            raise ValidationError(self.error_messages['invalid_image'])
+        if hasattr(f, 'seek') and callable(f.seek):
+            f.seek(0)
+        return f
 
 
 class AudioFile(File):
@@ -15,7 +51,8 @@ class AudioFile(File):
         """
         if getattr(self, '_duration_cache', None):
             return self._duration_cache
-        duration = extractMetadata(createParser(self.path)).get('duration')
+        duration = extractMetadata(guessParser(\
+            InputIOStream(self))).get('duration')
         if not duration:
             raise Exception(u'Not an audio file')
         else:
@@ -46,62 +83,9 @@ class AudioFileField(models.FileField):
         self._format = format
         self._bitrate = bitrate
 
-        self.duration_field = None
-        
         super(AudioFileField, self).__init__(*args, **kwargs)
-    #     
-    # def contribute_to_class(self, cls, name):
-    #     super(ImageField, self).contribute_to_class(cls, name)
-    #     signals.post_init.connect(self.update_duration, sender=cls)
-    # 
-    # def update_duration(self, instance, force=False, *args, **kwargs):
-    #     """
-    #     Updates field's width and height fields, if defined.
-    # 
-    #     This method is hooked up to model's post_init signal to update
-    #     dimensions after instantiating a model instance.  However, dimensions
-    #     won't be updated if the dimensions fields are already populated.  This
-    #     avoids unnecessary recalculation when loading an object from the
-    #     database.
-    # 
-    #     Dimensions can be forced to update with force=True, which is how
-    #     ImageFileDescriptor.__set__ calls this method.
-    #     """
-    #     # Nothing to update if the field doesn't have have dimension fields.
-    #     # has_dimension_fields = self.width_field or self.height_field
-    #     # if not has_dimension_fields:
-    #     #     return
-    #     if not self.duration_field:
-    #         return
-    # 
-    #     # getattr will call the ImageFileDescriptor's __get__ method, which
-    #     # coerces the assigned value into an instance of self.attr_class
-    #     # (ImageFieldFile in this case).
-    #     file = getattr(instance, self.attname)
-    # 
-    #     # Nothing to update if we have no file and not being forced to update.
-    #     if not file and not force:
-    #         return
-    # 
-    #     # dimension_fields_filled = not(
-    #     #     (self.width_field and not getattr(instance, self.width_field))
-    #     #     or (self.height_field and not getattr(instance, self.height_field))
-    #     # )
-    #     # When both dimension fields have values, we are most likely loading
-    #     # data from the database or updating an image field that already had
-    #     # an image stored.  In the first case, we don't want to update the
-    #     # dimension fields because we are already getting their values from the
-    #     # database.  In the second case, we do want to update the dimensions
-    #     # fields and will skip this return because force will be True since we
-    #     # were called from ImageFileDescriptor.__set__.
-    #     if not(self.duration_field and not getattr(instance, self.duration_field)) and not force:
-    #         return
-    # 
-    #     # file should be an instance of ImageFieldFile or should be None.
-    #     if file:
-    #         duration = file.duration
-    #     else:
-    #         duration = None
-    # 
-    #     if self.duration_field:
-    #         setattr(instance, self.duration_field, duration)
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': AudioField}
+        defaults.update(kwargs)
+        return super(AudioFileField, self).formfield(**defaults)
