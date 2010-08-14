@@ -1,7 +1,10 @@
 # Django settings for voices_in_the_head project.
 import os
+import sys
 
 WORKDIR = os.path.dirname(__file__)
+
+sys.path.append(os.path.join(WORKDIR, 'apps'));
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -49,11 +52,12 @@ USE_L10N = True
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(WORKDIR, 'static')
+WRITABLE_FOLDER = 'writable'
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = ''
+MEDIA_URL = 'http://localhost:8000'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -78,7 +82,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'voices_in_the_head.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -95,4 +99,14 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
+    'django.contrib.flatpages',
+    'django.contrib.humanize',
+    'django.contrib.admin',
+    'core',
+    'vith_core'
 )
+
+try:
+    from settings_local import *
+except:
+    pass
