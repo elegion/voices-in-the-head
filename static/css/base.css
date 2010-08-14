@@ -42,11 +42,25 @@ html, body {
 }
 
 /*  3. Main page */
+.playlist_wrapper {
+    float: right;
+    width: 370px;
+}
+    .ajax_loader {
+        margin: 5em auto;
+    }
+.ajax_loader {
+    background: transparent url(/imgs/ajax-loader.gif) no-repeat 0 0;
+    width: 16px;
+    height: 16px;
+}
+
 .player_wrapper {
     float: left;
 }
 
 .playlist {
+    display: none;
     width: 370px;
     height: 400px;
     overflow-y: scroll;

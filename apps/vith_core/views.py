@@ -13,7 +13,7 @@ def tracks(request):
     """
     Return list of all uploaded tracks in json format
     """
-    tracks = Track.objects.filter(play_time__gte=datetime.datetime.now())
+    tracks = Track.objects.all()#.filter(play_time__gte=datetime.datetime.now())
     data = []
     for t in tracks:
         tdict = model_to_dict(t)

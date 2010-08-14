@@ -30,7 +30,7 @@ class Track(models.Model):
         
     class Meta(object):
         get_latest_by = 'play_time'
-        ordering = ['-play_time', '-uploaded']
+        ordering = ['play_time', 'uploaded']
         
     def __unicode__(self):
         return '%(name)s, %(length)ss from %(uploader)s' % {'name': self.name, 'length': self.length,\
