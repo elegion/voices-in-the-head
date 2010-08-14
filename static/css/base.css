@@ -63,6 +63,29 @@ strong {
     float: left;
 }
 
+#now_playing {
+    width: 400px;
+    position: relative;
+    clear: both;
+}
+    #now_playing .progress {
+        background: #F9FE53;
+        height: 90%;
+        position: absolute;
+        top: 0;
+    }
+    
+    #now_playing .track {
+        position: relative;
+        z-index: 10;        
+    }
+    
+    #now_playing .duration {
+        position: relative;
+        z-index: 10;
+        float: right;
+    }
+
 .playlist {
     display: none;
     width: 370px;

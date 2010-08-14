@@ -9,6 +9,7 @@ $(function(){
     Uploader.init();
 
     Playlist.init();
+    NowPlaying.init();
 });
 
 var Uploader = {
@@ -156,5 +157,59 @@ var Playlist = {
         }           
         
         self._last_tracks = tracks;
+    }
+};
+
+
+var NowPlaying = {
+    $block: null,
+    
+    init: function() {
+        var self = this;
+        
+        self.$block = $('#now_playing');
+
+        self.update();
+        setInterval(function() {self.update()}, 1000);
+    },
+    
+    update: function() {
+        var self = this;
+        $.get('/now_playing/', function(data) {
+            var track = eval('(' + data + ')');
+            
+            if (track && track[0]) {
+                track = track[0];
+                track.pos_p =
+                    Math.floor(track['position'] / track.length * 100);
+                    
+                if (self._cur_track != track.id) {
+                    self.$block.empty();
+                    self.$block.append(self.render(track));
+                } else {
+                    $('.progress', self.$block).css('width', track.pos_p + '%');
+                    console.dir(track.pos_p);
+                }
+                
+                self._cur_track = track.id;
+            }
+        });
+    },
+    
+    template: '<div id="track_%id%">\
+        <span class="track">%name%<q></q></span>\
+        <span class="duration">%length%</span>\
+        <div class="progress" style="width: %pos_p%%;"></div>\
+    </div>',
+    
+    render: function(raw_data) {
+        div = this.template;
+        data = raw_data;
+        var l = data['length'];
+        data['length'] = Math.floor(l/60) + ':' + l % 60;
+        for (var datakey in data) {
+            div = div.replace('%' + datakey + '%', data[datakey]);
+        }
+        return $(div);        
     }
 };
