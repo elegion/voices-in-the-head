@@ -1,12 +1,7 @@
 $(function(){
-
-    $('.play').toggle(function(){
-        $(this).removeClass('play').addClass('pause');
-    }, function() {
-        $(this).removeClass('pause').addClass('play');
-    });
-
     Uploader.init();
+
+    Player.init();
 
     Playlist.init();
 });
@@ -81,6 +76,55 @@ var Uploader = {
     }
 };
 
+var Player = {
+    $player: null,
+    $current: null,
+
+    init: function() {
+        var self = this;
+        this.$player = $('#jquery_jplayer').jPlayer({
+            customCssIds: true
+        }).jPlayer('onProgressChange', function() {
+            self._on_progress_change.apply(self, arguments);
+        });
+    },
+
+    toggle: function($container, url) {
+        if (this.$current && this.$current==$container) {
+            this.pause($container);
+            return;
+        } else if (this.$current) {
+            this.pause(this.$current);
+        }
+        this.play($container, url);
+    },
+
+    _on_progress_change: function(lp,ppr,ppa,pt,tt) {
+        if (!this.$current) {
+            return;
+        }
+        this.$current.find('.progress span').css('width', ppa + '%');
+    },
+
+    play: function($container, url) {
+        if (this.$current) {
+            this.pause(this.$current);
+        }
+        this.$player.jPlayer('setFile', url).jPlayer('play');
+
+        $container.addClass('playing');
+        this.$current = $container;
+    },
+
+    pause: function($container) {
+        this.$player.jPlayer('pause');
+
+        $container.removeClass('playing');
+
+        this.$current = null;
+    }
+};
+
 var Playlist = {
     $playlist: null,
     $playlist_wrapper: null,
@@ -110,22 +154,28 @@ var Playlist = {
     },
 
     li_template: '<li class="%odd%" id="track_%id%">\
-        <a class="control play"></a>\
-        <span class="track">%name%<q></q></span>\
-        <a class="control delete"></a>\
+        <a class="control play_pause"></a>\
+        <span class="track">%name%<span class="progress"><span></span></span><q></q></span>\
+        <a class="control delete" title="Vote againist this track"></a>\
         <span class="duration">%length%</span>\
     </li>',
 
     render_li: function(raw_data, pos) {
-        li = this.li_template;
-        data = raw_data;
-        var l = data['length'];
+        var li = this.li_template,
+            data = raw_data,
+            l = data['length'];
         data['length'] = Math.floor(l/60) + ':' + l % 60;
         data['odd'] = pos % 2 == 0 ? 'odd' : 'even';
         for (var datakey in data) {
             li = li.replace('%' + datakey + '%', data[datakey]);
         }
-        return $(li);
+
+        // Bind events
+        li = $(li);
+        li.find('.control.play_pause').click(function(){
+            Player.toggle(li, raw_data.track_file);
+        });
+        return li;
     },
 
     fill_playlist: function(rawtracks) {

@@ -80,8 +80,20 @@ strong {
             background-image: url(../imgs/fade_to_bg_even.png);
         }
     .playlist .odd {
-
     }
+    .playlist .playing {
+        background: #dddddd;
+    }
+        .playlist .playing .progress {
+            display: block;
+        }
+        .playlist .playing .play_pause {
+            width: 26px;
+            background-image: url(../imgs/btn_pause.png);
+        }
+            .playlist .playing .play_pause:hover {
+                background-image: url(../imgs/btn_pause_hover.png);
+            }
     .playlist .track {
         width: 230px;
         margin: 0 0 0 6px;
@@ -110,7 +122,7 @@ strong {
         position: absolute;
         left: 0;
         bottom: 0;
-        displayu: block;
+        display: none;
         background: #aaa;
     }
         .playlist .progress span {
@@ -126,19 +138,12 @@ strong {
         cursor: pointer;
         vertical-align: middle;
     }
-    .playlist .play {
+    .playlist .play_pause {
         width: 26px;
         background-image: url(../imgs/btn_play.png);
     }
-        .playlist .play:hover {
+        .playlist .play_pause:hover {
             background-image: url(../imgs/btn_play_hover.png);
-        }
-    .playlist .pause {
-        width: 26px;
-        background-image: url(../imgs/btn_pause.png);
-    }
-        .playlist .pause:hover {
-            background-image: url(../imgs/btn_pause_hover.png);
         }
     .playlist .delete {
         width: 25px;

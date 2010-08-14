@@ -40,7 +40,7 @@ class Track(models.Model):
 
     def as_dict(self):
         tdict = model_to_dict(self)
-        tdict['track_file'] = tdict['track_file'].name
+        tdict['track_file'] = tdict['track_file'].url
         tdict['play_time'] = datetime_to_timestamp(tdict['play_time'])
         return tdict
 
