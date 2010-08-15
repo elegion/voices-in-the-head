@@ -14,6 +14,10 @@ from vlc_rc import rc as vlc_rc
 logger = logging.getLogger('vith_core')
 
 
+TWITTER_CONSUMER_KEY = getattr(settings, 'TWITTER_CONSUMER_KEY', None)
+TWITTER_CONSUMER_SECRET = getattr(settings, 'TWITTER_CONSUMER_SECRET', None)
+TWITTER_TOKEN = getattr(settings, 'TWITTER_TOKEN', None)
+
 @json_view
 def tracks(request):
     """
@@ -158,17 +162,21 @@ def vote(request):
 
 
 def twitter_notify_now_playing(track, next_track):
-    if TWITTER_USERNAME and TWITTER_PASSWORD:
-        import twitter
-        api = twitter.Api(username=TWITTER_USERNAME, password=TWITTER_PASSWORD)
+    if TWITTER_CONSUMER_KEY and TWITTER_CONSUMER_SECRET:
+        import oauthtwitter
+        from oauth.oauth import OAuthToken
+        api = oauthtwitter.OAuthApi(TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET,\
+            OAuthToken.from_string(TWITTER_TOKEN))
 
         status = 'Now playing "%s" (%d:%02d)' % (track.name[:30], track.length/60, track.length % 60)
         if track.uploader and track.uploader.twitter:
             status += ' by @%s' % track.uploader.twitter
         if next_track:
-            status += ', next one "%s" (%d:%02d)' % (next_track.name[:30], next_track.length/60, track.length %60)
+            status += ', next one "%s" (%d:%02d)'\
+                % (next_track.name[:30], next_track.length/60, next_track.length % 60)
             if next_track.uploader and next_track.uploader.twitter:
                 status += ' by @%s' % next_track.uploader.twitter
+                
         api.PostUpdate(status)
 
 
