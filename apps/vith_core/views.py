@@ -58,22 +58,8 @@ def _now_playing_fallback(request):
         tdata = curr_track.as_dict()
         tdata['position'] = curr_pos
         data = [tdata]
-        
-        tn = TrackNotified.objects.get_or_create(track=curr_track)
-        if tn:
-            tn = tn[0]
-        if not tn or not curr_track.tracknotified.twitter_now:
-            next_track = Track.objects.filter(play_time__gt=curr_track.play_time)\
-                .exclude(pk=curr_track.pk).order_by('play_time')
-            if next_track:
-                next_track = next_track[0]
-                
-            twitter_notify_now_playing(curr_track, next_track)
-            
-            tn.twitter_now = True
-            tn.save()
 
-    return JsonResponse(data)
+    return data, curr_track
 
 
 def now_playing(request):
@@ -99,7 +85,20 @@ def now_playing(request):
         rc.close()
 
     if not data:
-        return _now_playing_fallback(request)
+        data, current_track = _now_playing_fallback(request)
+
+    if data:
+        tn = TrackNotified.objects.get_or_create(track=current_track)[0]
+        if not current_track.tracknotified.twitter_now:
+            next_track = Track.objects.filter(play_time__gt=current_track.play_time)\
+                .exclude(pk=current_track.pk).order_by('play_time')
+            if next_track:
+                next_track = next_track[0]
+
+            twitter_notify_now_playing(current_track, next_track)
+
+            tn.twitter_now = True
+            tn.save()
 
     return JsonResponse(data)
 
