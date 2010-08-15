@@ -23,6 +23,7 @@ class Interface(base.Interface):
     def __init__(self, host, port):
         self.host = host
         self.port = port
+        self.telnet = None
 
     def _write(self, string):
         command = str('%s\n' % string)
@@ -40,7 +41,9 @@ class Interface(base.Interface):
         self.name = self.add_broadcast()
 
     def close(self):
-        self.telnet.close()
+        if self.telnet:
+            self.telnet.close()
+            self.telnet = None
 
     def add_broadcast(self, name='bcast'):
         self._write('new %s broadcast enabled' % name)
