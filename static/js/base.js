@@ -157,7 +157,7 @@ var Playlist = {
     li_template: '<li class="%odd%" id="track_%id%">\
         <a class="control play_pause"></a>\
         <span class="track">%name%<span class="progress"><span></span></span><q></q></span>\
-        <a class="control delete" title="Vote againist this track"></a>\
+        <a class="control delete %voted%" title="Vote against this track"></a>\
         <span class="duration">%length%</span>\
     </li>',
 
@@ -176,6 +176,23 @@ var Playlist = {
         li.find('.control.play_pause').click(function(){
             Player.toggle(li, raw_data.track_file);
         });
+        li.find('.control.delete').click(function() {
+            var self = this;
+            $.post('/vote/', {'track_id': raw_data.id}, function(data) {
+                var data = eval('('+ data + ')');
+                if (data['error']) {
+                    alert(data['error']);
+                } else if (data['result'] == 'delete') {
+                    li.remove();
+                } else if (data['result'] == 'ok') {
+                    $(self).addClass('voted');
+                }
+            });
+        });
+        
+        if (!raw_data.can_vote) {
+            li.find('.delete').remove();
+        }
         return li;
     },
 
@@ -228,7 +245,10 @@ var NowPlaying = {
         
         if (self._cur_track && self._cur_track.pos_p <= 99) {
             self._cur_track.position += (new Date().getTime() - self._last_time) / 1000;
-            self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track.length * 100);
+            self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track['length'] * 100);
+            if (!self._cur_track.pos_p) {
+                self._cur_track.pos_p = 0;
+            }
             $('.progress', self.$block).css('width', self._cur_track.pos_p + '%');
             setTimeout(function() {self.update()}, 1000);
 
@@ -257,15 +277,15 @@ var NowPlaying = {
     
     template: '<div id="track_%id%">\
         <span class="track">%name%<q></q></span>\
-        <span class="duration">%length%</span>\
+        <span class="duration">%length_m%</span>\
         <div class="progress" style="width: %pos_p%%;"></div>\
     </div>',
     
     render: function(raw_data) {
-        div = this.template;
+        var div = this.template;
         data = raw_data;
         var l = data['length'];
-        data['length'] = Math.floor(l/60) + ':' + l % 60;
+        data['length_m'] = Math.floor(l/60) + ':' + l % 60;
         for (var datakey in data) {
             div = div.replace('%' + datakey + '%', data[datakey]);
         }

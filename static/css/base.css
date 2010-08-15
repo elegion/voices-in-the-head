@@ -174,7 +174,7 @@ strong {
         background-image: url(../imgs/btn_delete.png);
         float: right;
     }
-        .playlist .delete:hover {
+        .playlist .delete:hover, .playlist .delete.voted {
             background-image: url(../imgs/btn_delete_hover.png);
         }
 
