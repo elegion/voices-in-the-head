@@ -1,11 +1,72 @@
 $(function(){
     Uploader.init();
 
+    Recorder.init();
+
     Player.init();
 
     Playlist.init();
+    
     NowPlaying.init();
 });
+
+var Recorder = {
+    MAX_TRACK_LEN: 20000, /* in milliseconds */
+
+    /** @type HTMLAppletElement */
+    _applet: null,
+    /** @type handler */
+    _stop_timeout: null,
+
+    init: function() {
+        $('#btn_rec').click(function() {
+            Recorder.rec();
+        })
+    },
+
+    rec: function() {
+        if (!this._applet) {
+            $('#layout_footer').append(
+                '<applet code="RPApplet.class" archive="/js/RPAppletMp3.jar" codebase="." align="MIDDLE" width=374 height=1 name="RPApplet" mayscript>'
+                + '<param name="cabbase" value="/js/RPAppletMp3.cab">'
+                + '<param name="Registration" value="demo">'
+                + '<param name="ServerScript" value="/upload/">'
+                + '<param name="VoiceServerFolder" value="">'
+                + '<param name="TimeLimit" value="1800">'
+                + '<param name="BlockSize" value="10240">'
+                + '<param name="InterfaceType" value="JS">'
+                + '<param name="UserServerFolder" value="">'
+                + '<param name="UserPostVariables" value="name">'
+                + '<param name="Sampling_frequency" value="22050">'
+                + '<param name="Bitrate" value="64">'
+                + '<param name="backgroudColor" value="c0c0c0">'
+                + '<param name="indicatorLevel1" value="4664f0">'
+                + '<param name="indicatorLevel2" value="28c814">'
+                + '<param name="indicatorLevel3" value="f03250">'
+                + '</applet>'
+            );
+            this._applet = document.RPApplet;
+        }
+        this._applet.RECORD();
+        this._stop_timeout = setTimeout(function() {
+            Recorder.stop();
+        }, this.MAX_TRACK_LEN);
+    },
+
+    stop: function() {
+        if (this._stop_timeout) {
+            this._stop_timeout = clearTimeout(this._stop_timeout);
+        }
+
+        this._applet.STOP_RP();
+        var file_name = prompt('Please, enter track name:', '');
+        if (!file_name) {
+            return;
+        }
+        this._applet.SETPARAMETER('name', file_name);
+        this._applet.UPLOAD('voice');
+    }
+}
 
 var Uploader = {
     $btn: null,

@@ -63,7 +63,10 @@ def upload(request):
     """
     Uploads and enqueues track
     """
-    form = UploadForm(request.POST, request.FILES)
+    files = {
+        'track_file': request.FILES.get('track_file', None) or request.FILES.get('USERFILE', None)
+    }
+    form = UploadForm(request.POST, files)
     if form.is_valid():
         track = form.save(commit=False)
         track.length = 0
