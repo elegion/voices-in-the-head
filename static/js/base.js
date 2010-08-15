@@ -318,8 +318,7 @@ var NowPlaying = {
                 
                 if (track && track[0]) {
                     track = track[0];
-                    track.pos_p =
-                        Math.floor(track['position'] / track.length * 100);
+                    track.pos_p = Math.floor(track['position'] / track.length * 100);
                     
                     self.$block.append(self.render(track));
                 
