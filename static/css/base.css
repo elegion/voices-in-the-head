@@ -213,6 +213,19 @@ strong {
             background-image: url(../imgs/btn_rec_hover.png);
         }
 
+    .upload_controls .record_progress {
+        width: 154px;
+        height: 8px;
+        background: #aaa;
+        position: absolute;
+        display: none;
+    }
+        .upload_controls .record_progress div {
+            width: 0;
+            height: 8px;
+            background: #777;
+        }
+
 .uploadifyQueue {
     position: absolute;
 }
