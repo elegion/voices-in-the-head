@@ -266,7 +266,7 @@ var Player = {
 
     toggle: function($container, url) {
         if (this.$current && this.$current==$container) {
-            this.pause($container);
+            this.pause(this.$current);
             return;
         } else if (this.$current) {
             this.pause(this.$current);
@@ -292,11 +292,13 @@ var Player = {
     },
 
     pause: function($container) {
-        this.$player.jPlayer('pause');
+        if (this.$current && $container.attr('id') == this.$current.attr('id')) {
+            this.$player.jPlayer('pause');
 
-        $container.removeClass('playing');
+            $container.removeClass('playing');
 
-        this.$current = null;
+            this.$current = null;
+        }
     }
 };
 
@@ -379,7 +381,9 @@ var Playlist = {
         // remove deleted
         for (var id in self._last_tracks) {
             if (!(id in tracks)) {
-                $('#track_' + id).remove();
+                var $li = $('#track_' + id);
+                Player.pause($li);
+                $li.slideUp('slow').fadeOut('slow', function() { $(this).remove() });
             }
         }
 
