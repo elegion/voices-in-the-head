@@ -8,6 +8,8 @@ $(function(){
     Playlist.init();
     
     NowPlaying.init();
+    
+    Tweets.init();
 });
 
 var Recorder = {
@@ -353,3 +355,50 @@ var NowPlaying = {
         return $(div);        
     }
 };
+
+
+var Tweets = {
+    api_q: '#inthehead',
+    api_rpp: 20,
+    api_url: 'http://search.twitter.com/search.json',
+    $container: null,
+    
+    init: function() {
+        var self = this;
+        self._last_id = 0;
+        
+        self.$container = $('#js_tweets');
+        
+        self.update();
+        setInterval(function() {self.update()}, 10000);
+    },
+    
+    update: function() {
+        var self = this;
+        
+        $.getJSON(self.api_url + '?callback=?',
+            {'rpp': self.api_rpp, 'q': self.api_q, 'since_id': self._last_id}, function(data){
+                self._last_id = data.max_id;
+                for(var i=data.results.length - 1; i >= 0; i--) {
+                    self.$container.prepend(self.render(data.results[i]));
+                }
+                self.$container.find('li:gt(' + (self.api_rpp - 1) + ')').remove();
+                $('abbr.timeago').timeago();
+        });
+    },
+    
+    template: '<li><img src="%profile_image_url%"></img>%text%<abbr class="timeago" title="%created_at%"></abbr></li>',
+    
+    render: function(data) {
+        var self = this;
+        
+        data['text'] = data['text'].replace(/@([0-9a-zA-Z_]+)/g, '<a href="http://twitter.com/$1">@$1</a>')
+        data['text'] = data['text'].replace(/(#[0-9a-zA-Z_]+)/g, '<a href="http://twitter.com/search?q=$1">$1</a>')
+        
+        el = self.template;
+        for (key in data) {            
+            el = el.replace('%' + key  + '%', data[key]);
+        }
+        return $(el);
+    },
+}
