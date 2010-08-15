@@ -18,7 +18,7 @@ class Interface(base.Interface):
         self.port = port
 
     def _write(self, string):
-        command = '%s\n' % string
+        command = str('%s\n' % string)
         return self.telnet.write(command)
 
     def connect(self, password='admin'):
