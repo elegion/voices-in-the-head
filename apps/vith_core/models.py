@@ -30,6 +30,15 @@ class TrackManager(models.Manager):
         except IndexError:
             raise Track.DoesNotExist
 
+    def get_by_url(self, url):
+        filename = url.rpartition('/')[2]
+        base_path = self.model._meta.get_field_by_name('track_file')[0].upload_to
+        path = os.path.join(base_path, filename)
+        try:
+            return self.get_query_set().filter(track_file=path)[0]
+        except IndexError:
+            raise Track.DoesNotExist
+
 
 class Track(models.Model):
     track_file = AudioFileField(format='mp3', bitrate=196,
