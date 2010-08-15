@@ -139,9 +139,10 @@ def vote(request):
         raise Exception('You already voted from this ip for this track.')
 
     vote = Vote.objects.create(track=track, ip=ip)
+    votes_count = track.votes_count + 1
     result = 'ok'
 
-    if track.votes_count >= DELETE_THRESHOLD:
+    if votes_count >= DELETE_THRESHOLD:
         track.delete()
         result = 'delete'
 
