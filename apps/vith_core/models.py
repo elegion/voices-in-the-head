@@ -14,6 +14,9 @@ from core.dbfields import AudioFileField
 MAX_LENGTH = getattr(settings, 'MAX_TRACK_LENGTH', 5 * 60) #dont used
 NORMALIZE = getattr(settings, 'TRACK_NORMALIZE', -6) #dont used
 NON_EDIT_TIME = getattr(settings, 'NON_EDIT_TIME', 300) #sec
+DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 1)
+TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
+TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
 
 
 class Uploader(models.Model):
@@ -74,6 +77,13 @@ class Track(models.Model):
 
     def can_vote(self):
         return self.play_time > datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME)
+
+    def delete(self, *args, **kwargs):
+        super(Track, self).delete(*args, **kwargs)
+        # Ugly, slow, not thread-safe piece of code:
+        for track in Track.objects.filter(play_time__gt=self.play_time):
+            track.play_time = track.play_time - datetime.timedelta(seconds=self.length)
+            track.save()
 
     def save(self, *args, **kwargs):
         """
