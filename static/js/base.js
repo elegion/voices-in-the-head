@@ -220,30 +220,39 @@ var NowPlaying = {
         self.$block = $('#now_playing');
 
         self.update();
-        setInterval(function() {self.update()}, 1000);
+        setTimeout(function() {self.update()}, 1000);
     },
     
     update: function() {
         var self = this;
-        $.get('/now_playing/', function(data) {
-            var track = eval('(' + data + ')');
-            
-            if (track && track[0]) {
-                track = track[0];
-                track.pos_p =
-                    Math.floor(track['position'] / track.length * 100);
-                    
-                if (self._cur_track != track.id) {
-                    self.$block.empty();
-                    self.$block.append(self.render(track));
-                } else {
-                    $('.progress', self.$block).css('width', track.pos_p + '%');
-                    console.dir(track.pos_p);
-                }
+        
+        if (self._cur_track && self._cur_track.pos_p <= 99) {
+            self._cur_track.position += (new Date().getTime() - self._last_time) / 1000;
+            self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track.length * 100);
+            $('.progress', self.$block).css('width', self._cur_track.pos_p + '%');
+            setTimeout(function() {self.update()}, 1000);
+
+            self._last_time = new Date().getTime()
+        } else {
+            $.get('/now_playing/', function(data) {
+                var track = eval('(' + data + ')');
+                self.$block.empty();
                 
-                self._cur_track = track.id;
-            }
-        });
+                if (track && track[0]) {
+                    track = track[0];
+                    track.pos_p =
+                        Math.floor(track['position'] / track.length * 100);
+                    
+                    self.$block.append(self.render(track));
+                
+                    self._cur_track = track;
+                    setTimeout(function() {self.update()}, 1000);
+                    self._last_time = new Date().getTime();
+                } else {
+                    setTimeout(function() {self.update()}, 10000);
+                }
+            });
+        }
     },
     
     template: '<div id="track_%id%">\
