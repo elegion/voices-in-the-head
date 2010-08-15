@@ -5,4 +5,7 @@ hachoir-metadata
 hachoir-parser
 hachoir-core
 
+simplejson
+oauth
 python-twitter==0.6
+oauth-python-twitter==1.0

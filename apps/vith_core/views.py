@@ -7,21 +7,21 @@ from django.shortcuts import get_object_or_404, render_to_response
 
 from core import json_view, JsonResponse
 from vith_core.forms import UploadForm
-from vith_core.models import Track, Vote, TrackNotified, Uploader
+from vith_core.models import Track, Vote, TrackNotified, Uploader, DELETE_THRESHOLD, TWITTER_USERNAME, TWITTER_PASSWORD
 from vlc_rc import rc as vlc_rc
 
 
 logger = logging.getLogger('vith_core')
 
 
-DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 1)
-TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
-TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
+TWITTER_CONSUMER_KEY = getattr(settings, 'TWITTER_CONSUMER_KEY', None)
+TWITTER_CONSUMER_SECRET = getattr(settings, 'TWITTER_CONSUMER_SECRET', None)
+TWITTER_TOKEN = getattr(settings, 'TWITTER_TOKEN', None)
 
-
+@json_view
 def tracks(request):
     """
-    Return list of all uploaded tracks in json format
+    Return list of all unplayed tracks in json format
     """
     tracks = Track.objects.filter(play_time__gte=datetime.datetime.now())
 
@@ -36,18 +36,20 @@ def tracks(request):
             tdict['voted'] = 'voted'
         data.append(tdict)
 
-    return JsonResponse(data)
+    return data
 
 
 def _now_playing_fallback(request):
     """
-    Fallback when vlc got broken.
+    Fallback when vlc now_playing got broken.
+    
+    Work by comparison track's play time and datetime.now()
     """
     now = datetime.datetime.now()
     try:
         curr_track = Track.objects.current_track(now)
     except Track.DoesNotExist:
-        return JsonResponse([])
+        return [], None
 
     if curr_track:
         curr_pos = (now - curr_track.play_time).seconds
@@ -62,9 +64,12 @@ def _now_playing_fallback(request):
     return data, curr_track
 
 
+@json_view
 def now_playing(request):
     """
     Returns current track and now playing position.
+    
+    Connects to steaming server and asks this parameters.
     """
     data = []
 
@@ -103,7 +108,7 @@ def now_playing(request):
             tn.twitter_now = True
             tn.save()
 
-    return JsonResponse(data)
+    return data
 
 
 def upload(request):
@@ -148,28 +153,30 @@ def vote(request):
     result = 'ok'
 
     if votes_count >= DELETE_THRESHOLD:
-        # Note: get url before deleting a track, or file is being destroyed
-        # and url cannot be calculated.
-        url = track.track_file.url
+        if track.track_file: # Dummy condition for tests, in real world track file is required and not null
+            _delete_from_remote_playlist(track.track_file.url)
         track.delete()
-        _delete_from_remote_playlist(url)
         result = 'delete'
 
     return {'result': result}
 
 
 def twitter_notify_now_playing(track, next_track):
-    if TWITTER_USERNAME and TWITTER_PASSWORD:
-        import twitter
-        api = twitter.Api(username=TWITTER_USERNAME, password=TWITTER_PASSWORD)
+    if TWITTER_CONSUMER_KEY and TWITTER_CONSUMER_SECRET:
+        import oauthtwitter
+        from oauth.oauth import OAuthToken
+        api = oauthtwitter.OAuthApi(TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET,\
+            OAuthToken.from_string(TWITTER_TOKEN))
 
-        status = 'Now playing "%s"' % track.name[:30]
+        status = 'Now playing "%s" (%d:%02d)' % (track.name[:30], track.length/60, track.length % 60)
         if track.uploader and track.uploader.twitter:
             status += ' by @%s' % track.uploader.twitter
         if next_track:
-            status += ', next one "%s"' % next_track.name[:30]
+            status += ', next one "%s" (%d:%02d)'\
+                % (next_track.name[:30], next_track.length/60, next_track.length % 60)
             if next_track.uploader and next_track.uploader.twitter:
                 status += ' by @%s' % next_track.uploader.twitter
+                
         api.PostUpdate(status)
 
 

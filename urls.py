@@ -11,5 +11,5 @@ urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
     (r'^', include('vith_core.urls')),
     
-    url('^$', 'django.views.generic.simple.direct_to_template', {'template': 'base.html'}),
+    url('^$', 'django.views.generic.simple.direct_to_template', {'template': 'index.html'}),
 )

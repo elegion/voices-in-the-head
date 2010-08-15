@@ -4,12 +4,49 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from vith_core.models import Track
+from vith_core.models import Track, Vote, NON_EDIT_TIME
+
+
+class TracksTestCase(TestCase):
+    def test_simple(self):
+        # Create one old track
+        old_track = Track.objects.create(name='Old track',
+                                         play_time=datetime.datetime.now() - datetime.timedelta(seconds=5),
+                                         length=10)
+        track1 = Track.objects.create(name='Track 1',
+                                      play_time=old_track.play_time + datetime.timedelta(old_track.length),
+                                      length=20)
+        track2 = Track.objects.create(name='Track 2',
+                                      play_time=track1.play_time + datetime.timedelta(track1.length),
+                                      length=30)
+        response = self.client.get(reverse('vith_core.views.tracks'))
+        self.assertEquals(200, response.status_code)
+        self.assertEquals(track1.pk, response.data[0]['id'])
+        self.assertEquals(track2.pk, response.data[1]['id'])
+        self.assertEquals(2, len(response.data))
+
+    def test_voting(self):
+        # Warning!
+        # This test assumes that NON_EDIT_TIME is greater than 3 (otherwise track1 wont be returned in response)
+        track1 = Track.objects.create(name='Track 1',
+                                      play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME - 2),
+                                      length=20)
+        track2 = Track.objects.create(name='Track 2',
+                                      play_time=track1.play_time + datetime.timedelta(track1.length),
+                                      length=30)
+        Vote.objects.create(track=track2, ip='127.0.0.1')
+        response = self.client.get(reverse('vith_core.views.tracks'))
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('', response.data[0]['voted'])
+        self.assertEquals('voted', response.data[1]['voted'])
+        self.assertEquals(False, response.data[0]['can_vote'])
+        self.assertEquals(True, response.data[1]['can_vote'])
 
 
 class UploadTestCase(TestCase):
     def tearDown(self):
-        Track.objects.all().delete() # To remove uploaded files
+        # Remove uploaded files
+        Track.objects.all().delete()
 
     def test_enqueues(self):
         # Track already played and shouldn't affect new track play_time
@@ -53,3 +90,68 @@ class UploadTestCase(TestCase):
         self.assertEquals(response.data['status'], 'error')
         self.assertTrue(response.data['errors'].has_key('track_file'))
         self.assertTrue(response.data['errors'].has_key('name'))
+
+
+class VoteTestCase(TestCase):
+    def setUp(self):
+        self.old_setting = getattr(settings, 'DELETE_THRESHOLD', None)
+        settings.DELETE_THRESHOLD = 2
+        # Reload settings
+        from vith_core import views, models
+        reload(models)
+        reload(views)
+
+    def tearDown(self):
+        settings.DELETE_THRESHOLD = self.old_setting
+
+    def vote_till_removed(self, track_id):
+        for i in xrange(settings.DELETE_THRESHOLD):
+            response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track_id}, REMOTE_ADDR=i+1)
+            self.assertEquals(200, response.status_code)
+        self.assertEquals('delete', response.data['result'])
+
+    def test_playtime_updated(self):
+        track1 = Track.objects.create(name='Track 1',
+                                      play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME + 5),
+                                      length=10)
+        track2 = Track.objects.create(name='Track 2',
+                                      play_time=track1.play_time + datetime.timedelta(seconds=track1.length),
+                                      length=20)
+        self.vote_till_removed(track1.pk)
+
+        expected_time = track2.play_time - datetime.timedelta(seconds=track1.length)
+        track2 = Track.objects.get(pk=track2.pk)
+        self.assertEquals(expected_time, track2.play_time)
+
+    def test_deletes(self):
+        track = Track.objects.create(name='Track 1',
+                                     play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME + 5),
+                                     length=10)
+
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('ok', response.data['result'])
+
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=2)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('delete', response.data['result'])
+
+    def test_track_too_soon(self):
+        track = Track.objects.create(name='Track 1',
+                                     play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME - 5),
+                                     length=10)
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('error', response.data['result'])
+
+    def test_double_vote(self):
+        track = Track.objects.create(name='Track 1',
+                                     play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME + 5),
+                                     length=10)
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('ok', response.data['result'])
+
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('error', response.data['result'])

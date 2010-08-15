@@ -4,6 +4,11 @@ Django Dash repository for e-Legion team.
 Our project is called "Voices in the Head". Basically it is online user
 generated radio, broadcasted to a chosen one with webcam.
 
+Current and next track are translated in twitter @inthehead.
+
+You can look at working server on http://djangodash.ru
+(We try keep all turned on, but if not ask @anatoliy_larin in twitter)
+
 For streaming it uses two external streaming servers:
 
  * One for video (which is outsourced to some video streamer, currently
