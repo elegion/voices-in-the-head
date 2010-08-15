@@ -31,14 +31,13 @@ class AudioField(forms.FileField):
 
         try:            
             parser = guessParser(InputIOStream(file))
-            parser.validate()
-            
-            if not (parser.validate() or parser.mime_type != u'audio/mpeg'):
+
+            if not (parser.validate() and parser.mime_type == u'audio/mpeg'):
                 raise Exception
         except ImportError:
             raise
         except Exception: #not an mp3
-            raise forms.ValidationError(self.error_messages['invalid_image'])
+            raise forms.ValidationError(self.error_messages['invalid_format'])
         if hasattr(f, 'seek') and callable(f.seek):
             f.seek(0)
         return f
