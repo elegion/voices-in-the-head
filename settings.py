@@ -107,6 +107,10 @@ INSTALLED_APPS = (
     'vith_core'
 )
 
+VLC_TELNET_HOST = 'alarin.ru'
+VLC_TELNET_PORT = 4444
+VLC_TELNET_PASSWORD = 's3cr3t'
+
 try:
     from settings_local import *
 except:

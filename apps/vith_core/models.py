@@ -2,9 +2,10 @@ import datetime
 import os
 
 from django.conf import settings
+from django.core.mail import mail_admins
 from django.db import models
 from django.forms.models import model_to_dict
-
+from vlc_rc import rc as vlc_rc
 
 from core import datetime_to_timestamp
 from core.dbfields import AudioFileField
@@ -77,3 +78,23 @@ class Track(models.Model):
                 self.play_time = datetime.datetime.now()
 
         super(Track, self).save(*args, **kwargs)
+
+
+def update_remote_playlist(sender, instance, created, **kwargs):
+    """
+    Enque the track into the Vlc playlist via full URL.
+    """
+    if sender == Track and instance:
+        iface = vlc_rc.VlcRC().get(vlc_rc.INTERFACE_TELNET)
+        rc = iface(host=settings.VLC_TELNET_HOST,
+                   port=settings.VLC_TELNET_PORT)
+        try:
+            rc.connect(password=settings.VLC_TELNET_PASSWORD)
+            rc.add_input(instance.track_file.url)
+            rc.close()
+        except vlc_rc.interfaces.telnet.InvalidPasswordException, e:
+            mail_admins('Wrong password when connecting to Vlc telnet!', e,
+                        fail_silently=True)
+
+
+models.signals.post_save.connect(update_remote_playlist, sender=Track)
