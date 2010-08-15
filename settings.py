@@ -104,7 +104,8 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'django.contrib.admin',
     'core',
-    'vith_core'
+    'vith_core',
+    'vlc_rc'
 )
 
 VLC_TELNET_HOST = 'alarin.ru'
