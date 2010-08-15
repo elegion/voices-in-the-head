@@ -324,8 +324,8 @@ var Playlist = {
 
     update_playlist: function() {
         var self = this;
-        $.get('/tracks/', function(data) {
-            var tracks = eval('[' + data + ']')[0];
+        $.getJSON('/tracks/', function(data) {
+            var tracks = data[0];
             self.fill_playlist(tracks);
             self.$loader.hide();
             self.$playlist.show();
@@ -356,7 +356,6 @@ var Playlist = {
         li.find('.control.delete').click(function() {
             var self = this;
             $.post('/vote/', {'track_id': raw_data.id}, function(data) {
-                var data = eval('('+ data + ')');
                 if (data['error']) {
                     alert(data['error']);
                 } else if (data['result'] == 'delete') {
@@ -364,7 +363,7 @@ var Playlist = {
                 } else if (data['result'] == 'ok') {
                     $(self).addClass('voted');
                 }
-            });
+            }, 'json');
         });
 
         if (!raw_data.can_vote) {

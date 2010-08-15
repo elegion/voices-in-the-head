@@ -143,6 +143,9 @@ strong {
             .playlist .playing .play_pause:hover {
                 background-image: url(../imgs/btn_pause_hover.png);
             }
+        .playlist .playing .track q {
+            background-image: url(../imgs/fade_to_bg_playing.png);
+        }
     .playlist .track {
         width: 230px;
         margin: 0 0 0 6px;
