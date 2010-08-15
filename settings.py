@@ -111,6 +111,10 @@ VLC_TELNET_HOST = 'alarin.ru'
 VLC_TELNET_PORT = 4444
 VLC_TELNET_PASSWORD = 's3cr3t'
 
+TWITTER_CONSUMER_KEY = '3jMy2DN8AdpgMjaeLrNh7Q'
+TWITTER_CONSUMER_SECRET = 'rBzLIUc0XZpRyzGPaA8ZtgUjtbfTg7DRPfjLXTCj0'
+TWITTER_TOKEN = 'oauth_token_secret=1Xs95fwBibqzQkFNTxDiLWK9BkXqr3En6v5d2sEj8c&oauth_token=177931013-q3DLh30jrOsQxW2UqyM8WhS0PPNkohkH9fNch7ew'
+
 DEFAULT_FILE_STORAGE = 'core.storage.TransliteratedStorage'
 
 try:
