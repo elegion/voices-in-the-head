@@ -70,6 +70,7 @@ var Recorder = {
             + '<PARAM NAME = "TimeLimit"	VALUE = "1800">'
             + '<PARAM NAME = "UserServerFolder"	VALUE = ".">'
             + '<PARAM NAME = "UserPostVariables"	VALUE = "name">'
+            + '<PARAM NAME = "UserPostVariables"	VALUE = "twitter">'
             + '<PARAM NAME = "name"			VALUE = "voice">'
             + '<param name="BlockSize" value="1024000">'
             + '<param name="InterfaceType" value="JS">'
@@ -112,13 +113,14 @@ var Recorder = {
         this._applet.STOP_RP();
         this._progress.stop(); // If called before prompt, animation not shown
         
+        var self = this;
         Uploader.ask_data('', function(fileName, twitter) {
             if (!fileName) {
                 return;
             }
-            this._applet.SETPARAMETER('name', file_name);
-            this._applet.SETPARAMETER('twitter', twitter);
-            this._applet.UPLOAD('voice');            
+            self._applet.SETPARAMETER('name', fileName);
+            self._applet.SETPARAMETER('twitter', twitter);
+            self._applet.UPLOAD('voice');            
         });
         } catch(e) {
             alert(e)
