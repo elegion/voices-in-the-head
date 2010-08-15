@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, render_to_response
 
 from core import json_view, JsonResponse
 from vith_core.forms import UploadForm
-from vith_core.models import Track, Vote, TrackNotified
+from vith_core.models import Track, Vote, TrackNotified, Uploader
 from vlc_rc import rc as vlc_rc
 
 
@@ -116,6 +116,8 @@ def upload(request):
     if form.is_valid():
         track = form.save(commit=False)
         track.length = 0
+        if request.POST.get('twitter'):
+            track.uploader = Uploader.objects.get_or_create(twitter=request.POST.get('twitter'))[0]
         track.save()
         return JsonResponse({'status': 'ok',
                              'track': track.as_dict()})

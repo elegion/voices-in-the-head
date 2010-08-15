@@ -61,12 +61,15 @@ var Recorder = {
         }
 
         this._applet.STOP_RP();
-        var file_name = prompt('Please, enter track name:', '');
-        if (!file_name) {
-            return;
-        }
-        this._applet.SETPARAMETER('name', file_name);
-        this._applet.UPLOAD('voice');
+        
+        Uploader.ask_data('', function(fileName, twitter) {
+            if (!fileName) {
+                return;
+            }
+            this._applet.SETPARAMETER('name', file_name);
+            this._applet.SETPARAMETER('twitter', twitter);
+            this._applet.UPLOAD('voice');            
+        });
     }
 }
 
@@ -80,7 +83,7 @@ var Uploader = {
             uploader: '/js/uploadify.swf',
             fileDataName: 'track_file',
             script: '/upload/',
-            auto: true,
+            auto: false,
             multi: false,
             fileDesc: 'Audio files',
             fileExt: '*.mp3',
@@ -97,15 +100,35 @@ var Uploader = {
     },
 
     on_select: function(event, queue_id, file_obj) {
+        var self = this;
         var fileName = file_obj.name;
         fileName = fileName.substring(0, fileName.lastIndexOf('.'));
-        fileName = prompt('Please, enter track name:', fileName);
-        if (!fileName) {
-            this.$tbn.uploadifyCancel(queue_id);
-        }
-        this.$btn.uploadifySettings('scriptData', {name: fileName});
+        
+        self.ask_data(fileName, function(fileName, twitter) {
+            if (!fileName) {
+                self.$btn.uploadifyCancel(queue_id);
+            }
+            self.$btn.uploadifySettings('scriptData', {name: fileName, twitter: twitter});
+            self.$btn.uploadifyUpload();
+        });
     },
 
+    ask_data: function(fileName, callback) {
+        var namef = $('#js_askbox #js_name');
+        var twitf = $('#js_askbox #js_twitter')
+        namef.val(fileName);
+        twitf.val('');
+
+        $('#js_askbox').show();
+        $('#js_askbox .save').unbind('click');
+        $('#js_askbox .save').click(function() {
+            $('#js_askbox').hide();
+            if (callback) {
+                callback(namef.val(), twitf.val());
+            }
+        });
+    },
+    
     on_complete: function(event, queue_id, file_obj, response, data) {
         try {
             var $container = $('#' + this.$btn.attr('id') + queue_id);

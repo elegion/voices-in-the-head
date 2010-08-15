@@ -16,6 +16,27 @@ strong {
     font-weight: bold;
 }
 
+.ask_box {
+    position: absolute;
+    top: 30%;
+    left: 20%;
+    background: #EEE;
+    padding: 2em;
+    width: 40em;
+    display: none;
+}
+    .ask_box #js_name {
+        width: 20em;
+    }
+    .ask_box .f_row {
+        margin: 1em 0 1em 0;
+    }
+    .ask_box .save {
+        width: 7em;
+        margin: 2.5em auto 0 auto;
+        display: block;
+    }
+
 /*	2. Layout */
 #layout_main {
     width: 800px;
