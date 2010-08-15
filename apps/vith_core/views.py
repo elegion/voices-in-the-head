@@ -169,11 +169,11 @@ def twitter_notify_now_playing(track, next_track):
         import twitter
         api = twitter.Api(username=TWITTER_USERNAME, password=TWITTER_PASSWORD)
 
-        status = 'Now playing "%s"' % track.name[:30]
+        status = 'Now playing "%s" (%d:%02d)' % (track.name[:30], track.length/60, track.length % 60)
         if track.uploader and track.uploader.twitter:
             status += ' by @%s' % track.uploader.twitter
         if next_track:
-            status += ', next one "%s"' % next_track.name[:30]
+            status += ', next one "%s" (%d:%02d)' % (next_track.name[:30], next_track.length/60, track.length %60)
             if next_track.uploader and next_track.uploader.twitter:
                 status += ' by @%s' % next_track.uploader.twitter
         api.PostUpdate(status)
