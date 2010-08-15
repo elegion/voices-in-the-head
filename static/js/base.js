@@ -313,8 +313,7 @@ var NowPlaying = {
 
             self._last_time = new Date().getTime()
         } else {
-            $.get('/now_playing/', function(data) {
-                var track = eval('(' + data + ')');
+            $.getJSON('/now_playing/', function(track) {
                 self.$block.empty();
                 
                 if (track && track[0]) {
