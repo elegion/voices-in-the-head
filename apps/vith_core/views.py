@@ -2,7 +2,7 @@ import datetime
 import logging
 
 from django.conf import settings
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render_to_response
 
 from core import json_view, JsonResponse
 from vith_core.forms import UploadForm
@@ -79,7 +79,12 @@ def upload(request):
     """
     Uploads and enqueues track
     """
-    form = UploadForm(request.POST, request.FILES)
+    if not request.method == 'POST':
+        return render_to_response('upload.html', {'form': UploadForm()})
+    files = {
+        'track_file': request.FILES.get('track_file', None) or request.FILES.get('USERFILE', None)
+    }
+    form = UploadForm(request.POST, files)
     if form.is_valid():
         track = form.save(commit=False)
         track.length = 0
