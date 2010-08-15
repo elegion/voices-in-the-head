@@ -9,7 +9,8 @@ from vith_core.models import Track, NON_EDIT_TIME
 
 class UploadTestCase(TestCase):
     def tearDown(self):
-        Track.objects.all().delete() # To remove uploaded files
+        # Remove uploaded files
+        Track.objects.all().delete()
 
     def test_enqueues(self):
         # Track already played and shouldn't affect new track play_time
@@ -93,8 +94,28 @@ class VoteTestCase(TestCase):
 
         response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
         self.assertEquals(200, response.status_code)
-        self.assertEquals('ok', response.data['result']) # not yet deleted
+        self.assertEquals('ok', response.data['result'])
 
         response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=2)
         self.assertEquals(200, response.status_code)
         self.assertEquals('delete', response.data['result'])
+
+    def test_track_too_soon(self):
+        track = Track.objects.create(name='Track 1',
+                                     play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME - 5),
+                                     length=10)
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('error', response.data['result'])
+
+    def test_double_vote(self):
+        track = Track.objects.create(name='Track 1',
+                                     play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME + 5),
+                                     length=10)
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('ok', response.data['result'])
+
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('error', response.data['result'])
