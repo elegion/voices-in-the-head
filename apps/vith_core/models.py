@@ -100,9 +100,10 @@ def update_remote_playlist(sender, instance, created, **kwargs):
         try:
             rc.connect(password=settings.VLC_TELNET_PASSWORD)
             rc.add_input(instance.track_file.url)
-            rc.close()
         except Exception, e:
             mail_admins('Error while connecting to Vlc telnet!', e, fail_silently=True)
+        finally:
+            rc.close()
 
 
 models.signals.post_save.connect(update_remote_playlist, sender=Track)
