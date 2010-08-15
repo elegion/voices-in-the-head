@@ -1,14 +1,9 @@
 $(function(){
     Uploader.init();
-
     Recorder.init();
-
     Player.init();
-
-    Playlist.init();
-    
+    Playlist.init();    
     NowPlaying.init();
-
     Tweets.init();
 });
 
@@ -22,10 +17,11 @@ function setStatus_RP(str,num) {
     }
     window.console && window.console.debug(str,num);
 }
-function report_RP(s,num)
-{
+
+function report_RP(s,num) {
     alert(s);
 }
+
 function setTimer_RP(s)	{
 
 }
@@ -325,7 +321,7 @@ var Playlist = {
     update_playlist: function() {
         var self = this;
         $.getJSON('/tracks/', function(data) {
-            var tracks = data[0];
+            var tracks = data;
             self.fill_playlist(tracks);
             self.$loader.hide();
             self.$playlist.show();

@@ -19,9 +19,10 @@ TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
 TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
 
 
+@json_view
 def tracks(request):
     """
-    Return list of all uploaded tracks in json format
+    Return list of all unplayed tracks in json format
     """
     tracks = Track.objects.filter(play_time__gte=datetime.datetime.now())
 
@@ -36,18 +37,20 @@ def tracks(request):
             tdict['voted'] = 'voted'
         data.append(tdict)
 
-    return JsonResponse(data)
+    return data
 
 
 def _now_playing_fallback(request):
     """
-    Fallback when vlc got broken.
+    Fallback when vlc now_playing got broken.
+    
+    Work by comparison track's play time and datetime.now()
     """
     now = datetime.datetime.now()
     try:
         curr_track = Track.objects.current_track(now)
     except Track.DoesNotExist:
-        return JsonResponse([])
+        return [], None
 
     if curr_track:
         curr_pos = (now - curr_track.play_time).seconds
@@ -62,9 +65,12 @@ def _now_playing_fallback(request):
     return data, curr_track
 
 
+@json_view
 def now_playing(request):
     """
     Returns current track and now playing position.
+    
+    Connects to steaming server and asks this parameters.
     """
     data = []
 
@@ -103,7 +109,7 @@ def now_playing(request):
             tn.twitter_now = True
             tn.save()
 
-    return JsonResponse(data)
+    return data
 
 
 def upload(request):

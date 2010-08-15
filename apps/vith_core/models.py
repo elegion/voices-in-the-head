@@ -17,6 +17,9 @@ NON_EDIT_TIME = getattr(settings, 'NON_EDIT_TIME', 300) #sec
 
 
 class Uploader(models.Model):
+    """
+    Man who uploaded track. Now we need twitter name only.
+    """
     twitter = models.CharField(max_length=250)
 
     def __unicode__(self):
@@ -42,10 +45,7 @@ class TrackManager(models.Manager):
 
 
 class Track(models.Model):
-    track_file = AudioFileField(format='mp3', bitrate=196,
-                                normalize=NORMALIZE,
-                                max_length=MAX_LENGTH,
-                                upload_to=os.path.join(settings.WRITABLE_FOLDER, 'tracks'))
+    track_file = AudioFileField(upload_to=os.path.join(settings.WRITABLE_FOLDER, 'tracks'))
     length = models.PositiveSmallIntegerField() #seconds
     name = models.CharField(max_length=250)
     uploader = models.ForeignKey(Uploader, null=True)
@@ -78,7 +78,8 @@ class Track(models.Model):
     def save(self, *args, **kwargs):
         """
         Calc playtime on track saving.
-        FIXME: No thread safe :)
+        
+        If not tracks use datetime.now, else get last track and add it's duration
         """
         if not self.length and self.track_file:
             self.length = self.track_file._duration
@@ -96,6 +97,9 @@ class Track(models.Model):
 
 
 class TrackNotified(models.Model):
+    """
+    Remember ways which we notified people about this track
+    """
     track = models.OneToOneField(Track)
     twitter_now = models.BooleanField(default=False)
     twitter_uploader = models.BooleanField(default=False)
@@ -109,6 +113,10 @@ class VoteManager(models.Manager):
 
 
 class Vote(models.Model):
+    """
+    People can vote agains track, if votes count (denormalized in Track) 
+    is greater settings.DELETE_THRESHOLD track is removed
+    """
     track = models.ForeignKey(Track)
     ip = models.IPAddressField()
     created = models.DateTimeField(auto_now_add=True)
@@ -137,6 +145,9 @@ def update_remote_playlist(sender, instance, created, **kwargs):
 
 
 def update_votes_count(sender, instance, created, **kwargs):
+    """
+    Support votes count denormalization
+    """
     if sender == Vote and instance:
         Track.objects.filter(pk=instance.track.pk).update(votes_count=models.F('votes_count') + 1)
 

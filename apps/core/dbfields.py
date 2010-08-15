@@ -12,6 +12,11 @@ from hachoir_core.stream import InputIOStream
 
 
 class AudioField(forms.FileField):
+    """
+    Form field for audio file.
+    
+    Accepts mp3s only. Validates format.
+    """
     default_error_messages = {
         'invalid_format': _(u"Upload a valid mp3-file. The file you uploaded was either not an mp3 or a corrupted mp3."),
     }
@@ -44,6 +49,9 @@ class AudioField(forms.FileField):
 
 
 class AudioFile(File):
+    """
+    Audio file mixin for AudioFileField, determines audio file duration
+    """
     @property
     def _duration(self):
         """
@@ -67,24 +75,10 @@ class AudioFieldFile(AudioFile, FieldFile):
     
 class AudioFileField(models.FileField):
     """
-    Special field for audio files. Validates and preprocess files. Calcs duration
-    
-    Supported options (not supported :D
-     * max_length files will be cutted if track length is greater than this value, seconds
-     * normalize volume will be normalized to this value, dB
-     * format -- files will be encoded in this format 
-     * bitrate -- bitrate for encoding in prefered format
+    Special field for audio files. Validates mp3s and calcs duration
     """
     attr_class = AudioFieldFile
     
-    def __init__(self, max_length=None, normalize=None, format=None, bitrate=None, *args, **kwargs):
-        self._max_length = max_length
-        self._normalize = normalize
-        self._format = format
-        self._bitrate = bitrate
-
-        super(AudioFileField, self).__init__(*args, **kwargs)
-
     def formfield(self, **kwargs):
         defaults = {'form_class': AudioField}
         defaults.update(kwargs)
