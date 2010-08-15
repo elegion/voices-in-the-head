@@ -66,10 +66,10 @@ strong {
 #now_playing {
     width: 400px;
     position: relative;
-    clear: both;
+    float: left;
 }
     #now_playing .progress {
-        background: #F9FE53;
+        background: #9CEBFB;
         height: 90%;
         position: absolute;
         top: 0;
