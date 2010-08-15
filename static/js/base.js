@@ -8,12 +8,27 @@ $(function(){
     Playlist.init();
     
     NowPlaying.init();
-    
+
     Tweets.init();
 });
 
+function setStatus_RP(str,num) {
+    if (num == Recorder.LOADED) {
+        Recorder.start();
+    }
+    window.console && window.console.debug(str,num);
+}
+function report_RP(s,num)
+{
+    alert(s);
+}
+function setTimer_RP(s)	{
+
+}
+
 var Recorder = {
     MAX_TRACK_LEN: 20000, /* in milliseconds */
+    LOADED: 100,
 
     /** @type HTMLAppletElement */
     _applet: null,
@@ -22,52 +37,110 @@ var Recorder = {
 
     init: function() {
         $('#btn_rec').click(function() {
-            Recorder.rec();
+            Recorder.toggle();
         })
     },
 
-    rec: function() {
+    _init_applet: function() {
+        $('#layout_footer').append(
+            '<applet code="RPApplet.class" archive="/js/RPAppletMp3.jar" codebase="." align="MIDDLE" width=374 height=24 name="RPApplet" mayscript>'
+            + '<param name="cabbase" value="/js/RPAppletMp3.cab">'
+            + '<param name="Registration" value="demo">'
+            + '<param name="ServerScript" value="http://localhost:8000/upload/">'
+            + '<param name="OverRecord" value="true">'
+            + '<PARAM NAME = "VoiceServerFolder"	VALUE = ".">'
+            + '<PARAM NAME = "TimeLimit"	VALUE = "1800">'
+            + '<PARAM NAME = "UserServerFolder"	VALUE = ".">'
+            + '<PARAM NAME = "UserPostVariables"	VALUE = "name">'
+            + '<PARAM NAME = "name"			VALUE = "voice">'
+            + '<param name="BlockSize" value="1024000">'
+            + '<param name="InterfaceType" value="JS">'
+            + '<param name="name" value="voice">'
+            + '<param name="Sampling_frequency" value="22050">'
+            + '<param name="Bitrate" value="64">'
+            + '<param name="backgroudColor" value="c0c0c0">'
+            + '<param name="indicatorLevel1" value="4664f0">'
+            + '<param name="indicatorLevel2" value="28c814">'
+            + '<param name="indicatorLevel3" value="f03250">'
+            + '</applet>'
+        );
+        this._applet = document.RPApplet;
+    },
+
+    toggle: function() {
+        this._stop_timeout ? this.stop() : this.start();
+    },
+
+    start: function() {
         if (!this._applet) {
-            $('#layout_footer').append(
-                '<applet code="RPApplet.class" archive="/js/RPAppletMp3.jar" codebase="." align="MIDDLE" width=374 height=1 name="RPApplet" mayscript>'
-                + '<param name="cabbase" value="/js/RPAppletMp3.cab">'
-                + '<param name="Registration" value="demo">'
-                + '<param name="ServerScript" value="/upload/">'
-                + '<param name="VoiceServerFolder" value="">'
-                + '<param name="TimeLimit" value="1800">'
-                + '<param name="BlockSize" value="10240">'
-                + '<param name="InterfaceType" value="JS">'
-                + '<param name="UserServerFolder" value="">'
-                + '<param name="UserPostVariables" value="name">'
-                + '<param name="Sampling_frequency" value="22050">'
-                + '<param name="Bitrate" value="64">'
-                + '<param name="backgroudColor" value="c0c0c0">'
-                + '<param name="indicatorLevel1" value="4664f0">'
-                + '<param name="indicatorLevel2" value="28c814">'
-                + '<param name="indicatorLevel3" value="f03250">'
-                + '</applet>'
-            );
-            this._applet = document.RPApplet;
+            this._init_applet();
+            return;
         }
         this._applet.RECORD();
+        
         this._stop_timeout = setTimeout(function() {
             Recorder.stop();
         }, this.MAX_TRACK_LEN);
+        
+        this._progress.start();
     },
 
     stop: function() {
+        try {
         if (this._stop_timeout) {
             this._stop_timeout = clearTimeout(this._stop_timeout);
         }
 
         this._applet.STOP_RP();
         var file_name = prompt('Please, enter track name:', '');
+
+        this._progress.stop(); // If called before prompt, animation not shown
         if (!file_name) {
             return;
         }
         this._applet.SETPARAMETER('name', file_name);
         this._applet.UPLOAD('voice');
+        } catch(e) {
+            alert(e)
+        }
+    },
+
+    _progress: {
+        INTERVAL: 200, /* in milliseconds */
+
+        /** @type handler */
+        _interval: null,
+        /** @type int */
+        _passed: null,
+        /** @type jQuery */
+        _$progressbar: null,
+
+        start: function() {
+            this._interval = setInterval(function(){
+                Recorder._progress._on_progress();
+            }, this.INTERVAL);
+            this._passed = 0;
+
+            if (!this._$progressbar) {
+                this._$progressbar = $('#record_progress');
+            }
+            this._$progressbar.show();
+        },
+
+        _on_progress: function() {
+            this._passed += this.INTERVAL;
+            var percent = this._passed / Recorder.MAX_TRACK_LEN * 100;
+            this._$progressbar.children().css('width', percent + '%');
+        },
+
+        stop: function() {
+            if (this._interval) {
+                this._interval = clearInterval(this._interval);
+                this._$progressbar.fadeOut('fast');
+            }
+        }
     }
+
 }
 
 var Uploader = {
@@ -86,7 +159,7 @@ var Uploader = {
             fileExt: '*.mp3',
             sizeLimit: 1024*1024*10,
             buttonImg: '/imgs/btn_upload_sprite.png',
-            cancelImg: '/imgs/btn_upload_cancel.png',            
+            cancelImg: '/imgs/btn_upload_cancel.png',
             rollover: true,
             wmode: 'transparent',
             width: this.$btn.width(),
@@ -252,7 +325,7 @@ var Playlist = {
                 }
             });
         });
-        
+
         if (!raw_data.can_vote) {
             li.find('.delete').remove();
         }
@@ -268,14 +341,14 @@ var Playlist = {
         }
 
         // remove deleted
-        for (var id in self._last_tracks) {            
+        for (var id in self._last_tracks) {
             if (!(id in tracks)) {
                 $('#track_' + id).remove();
             }
         }
-        
+
         // add new
-        for (var i=0; i<rawtracks.length; i++) {            
+        for (var i=0; i<rawtracks.length; i++) {
             if (!(rawtracks[i].id in self._last_tracks)) {
                 var el = this.render_li(rawtracks[i], i);
                 if (i == 0) {
@@ -284,8 +357,8 @@ var Playlist = {
                     $('#track_' + rawtracks[i-1].id).after(el);
                 }
             }
-        }           
-        
+        }
+
         self._last_tracks = tracks;
     }
 };
@@ -293,19 +366,19 @@ var Playlist = {
 
 var NowPlaying = {
     $block: null,
-    
+
     init: function() {
         var self = this;
-        
+
         self.$block = $('#now_playing');
 
         self.update();
         setTimeout(function() {self.update()}, 1000);
     },
-    
+
     update: function() {
         var self = this;
-        
+
         if (self._cur_track && self._cur_track.pos_p <= 99) {
             self._cur_track.position += (new Date().getTime() - self._last_time) / 1000;
             self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track['length'] * 100);
@@ -320,14 +393,14 @@ var NowPlaying = {
             $.get('/now_playing/', function(data) {
                 var track = eval('(' + data + ')');
                 self.$block.empty();
-                
+
                 if (track && track[0]) {
                     track = track[0];
                     track.pos_p =
                         Math.floor(track['position'] / track.length * 100);
-                    
+
                     self.$block.append(self.render(track));
-                
+
                     self._cur_track = track;
                     setTimeout(function() {self.update()}, 1000);
                     self._last_time = new Date().getTime();
@@ -337,13 +410,13 @@ var NowPlaying = {
             });
         }
     },
-    
+
     template: '<div id="track_%id%">\
         <span class="track">%name%<q></q></span>\
         <span class="duration">%length_m%</span>\
         <div class="progress" style="width: %pos_p%%;"></div>\
     </div>',
-    
+
     render: function(raw_data) {
         var div = this.template;
         data = raw_data;
@@ -352,7 +425,7 @@ var NowPlaying = {
         for (var datakey in data) {
             div = div.replace('%' + datakey + '%', data[datakey]);
         }
-        return $(div);        
+        return $(div);
     }
 };
 
@@ -362,20 +435,20 @@ var Tweets = {
     api_rpp: 20,
     api_url: 'http://search.twitter.com/search.json',
     $container: null,
-    
+
     init: function() {
         var self = this;
         self._last_id = 0;
-        
+
         self.$container = $('#js_tweets');
-        
+
         self.update();
         setInterval(function() {self.update()}, 10000);
     },
-    
+
     update: function() {
         var self = this;
-        
+
         $.getJSON(self.api_url + '?callback=?',
             {'rpp': self.api_rpp, 'q': self.api_q, 'since_id': self._last_id}, function(data){
                 self._last_id = data.max_id;
@@ -386,17 +459,17 @@ var Tweets = {
                 $('abbr.timeago').timeago();
         });
     },
-    
+
     template: '<li><img src="%profile_image_url%"></img>%text%<abbr class="timeago" title="%created_at%"></abbr></li>',
-    
+
     render: function(data) {
         var self = this;
-        
+
         data['text'] = data['text'].replace(/@([0-9a-zA-Z_]+)/g, '<a href="http://twitter.com/$1">@$1</a>')
         data['text'] = data['text'].replace(/(#[0-9a-zA-Z_]+)/g, '<a href="http://twitter.com/search?q=$1">$1</a>')
-        
+
         el = self.template;
-        for (key in data) {            
+        for (key in data) {
             el = el.replace('%' + key  + '%', data[key]);
         }
         return $(el);
