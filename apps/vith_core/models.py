@@ -71,7 +71,10 @@ class Track(models.Model):
 
     def as_dict(self):
         tdict = model_to_dict(self)
-        tdict['track_file'] = tdict['track_file'].url
+        if tdict['track_file']: # Dummy condition for tests, in real world track file is required and not null
+            tdict['track_file'] = tdict['track_file'].url
+        else:
+            tdict['track_file'] = ''
         tdict['play_time'] = datetime_to_timestamp(tdict['play_time'])
         return tdict
 
