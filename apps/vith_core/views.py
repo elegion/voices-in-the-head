@@ -7,16 +7,11 @@ from django.shortcuts import get_object_or_404, render_to_response
 
 from core import json_view, JsonResponse
 from vith_core.forms import UploadForm
-from vith_core.models import Track, Vote, TrackNotified, Uploader
+from vith_core.models import Track, Vote, TrackNotified, Uploader, DELETE_THRESHOLD, TWITTER_USERNAME, TWITTER_PASSWORD
 from vlc_rc import rc as vlc_rc
 
 
 logger = logging.getLogger('vith_core')
-
-
-DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 1)
-TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
-TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
 
 
 def tracks(request):
@@ -148,11 +143,9 @@ def vote(request):
     result = 'ok'
 
     if votes_count >= DELETE_THRESHOLD:
-        # Note: get url before deleting a track, or file is being destroyed
-        # and url cannot be calculated.
-        url = track.track_file.url
+        if track.track_file: # Dummy condition for tests, in real world track file is required and not null
+            _delete_from_remote_playlist(track.track_file.url)
         track.delete()
-        _delete_from_remote_playlist(url)
         result = 'delete'
 
     return {'result': result}
