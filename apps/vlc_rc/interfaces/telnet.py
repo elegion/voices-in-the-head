@@ -19,6 +19,7 @@ class Interface(base.Interface):
     POSITION = 'position : '
     INDEX = 'playlistindex : '
     int_regex = re.compile(r'[^\d]*(\d+)[^\d]*')
+    ALL_INPUTS = 'all'
 
     def __init__(self, host, port):
         self.host = host
@@ -50,8 +51,11 @@ class Interface(base.Interface):
         return name
 
     def add_input(self, path):
+        is_playing = self._playing()
+        if not is_playing:
+            self.clear_playlist()
         self._write('setup %s input %s' % (self.name, path))
-        if not self._playing():
+        if not is_playing:
             self._write('control %s play' % self.name)
 
     def _playing(self):
@@ -61,6 +65,9 @@ class Interface(base.Interface):
 
     def remove_input(self, path):
         self._write('setup %s inputdel %s' % (self.name, path))
+
+    def clear_playlist(self):
+        self.remove_input(self.ALL_INPUTS)
 
     def now_playing(self):
         """

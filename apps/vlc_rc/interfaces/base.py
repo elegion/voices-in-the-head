@@ -16,3 +16,6 @@ class Interface(object):
 
     def remove_input(self, path):
         raise NotImplementedError
+
+    def clear_playlist(self):
+        raise NotImplementedError
