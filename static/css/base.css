@@ -16,6 +16,27 @@ strong {
     font-weight: bold;
 }
 
+.ask_box {
+    position: absolute;
+    top: 30%;
+    left: 20%;
+    background: #EEE;
+    padding: 2em;
+    width: 40em;
+    display: none;
+}
+    .ask_box #js_name {
+        width: 20em;
+    }
+    .ask_box .f_row {
+        margin: 1em 0 1em 0;
+    }
+    .ask_box .save {
+        width: 7em;
+        margin: 2.5em auto 0 auto;
+        display: block;
+    }
+
 /*	2. Layout */
 #layout_main {
     width: 800px;
@@ -122,6 +143,9 @@ strong {
             .playlist .playing .play_pause:hover {
                 background-image: url(../imgs/btn_pause_hover.png);
             }
+        .playlist .playing .track q {
+            background-image: url(../imgs/fade_to_bg_playing.png);
+        }
     .playlist .track {
         width: 230px;
         margin: 0 0 0 6px;

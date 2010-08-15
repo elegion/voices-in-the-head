@@ -30,6 +30,20 @@ function setTimer_RP(s)	{
 
 }
 
+var utils = {
+    print_time: function(seconds) {
+        return Math.floor(seconds/60) + ':' + utils.str_lpad(seconds % 60, 2, '0');
+    },
+
+    str_lpad: function(str, len, pad) {
+        str = str + '';
+        if (len + 1 > str.length) {
+            return Array(len + 1 - str.length).join(pad) + str;
+        }
+        return str;
+    }
+};
+
 var Recorder = {
     MAX_TRACK_LEN: 20000, /* in milliseconds */
     LOADED: 100,
@@ -96,14 +110,16 @@ var Recorder = {
         }
 
         this._applet.STOP_RP();
-        var file_name = prompt('Please, enter track name:', '');
-
         this._progress.stop(); // If called before prompt, animation not shown
-        if (!file_name) {
-            return;
-        }
-        this._applet.SETPARAMETER('name', file_name);
-        this._applet.UPLOAD('voice');
+        
+        Uploader.ask_data('', function(fileName, twitter) {
+            if (!fileName) {
+                return;
+            }
+            this._applet.SETPARAMETER('name', file_name);
+            this._applet.SETPARAMETER('twitter', twitter);
+            this._applet.UPLOAD('voice');            
+        });
         } catch(e) {
             alert(e)
         }
@@ -157,7 +173,7 @@ var Uploader = {
             uploader: '/js/uploadify.swf',
             fileDataName: 'track_file',
             script: '/upload/',
-            auto: true,
+            auto: false,
             multi: false,
             fileDesc: 'Audio files',
             fileExt: '*.mp3',
@@ -174,15 +190,35 @@ var Uploader = {
     },
 
     on_select: function(event, queue_id, file_obj) {
+        var self = this;
         var fileName = file_obj.name;
         fileName = fileName.substring(0, fileName.lastIndexOf('.'));
-        fileName = prompt('Please, enter track name:', fileName);
-        if (!fileName) {
-            this.$tbn.uploadifyCancel(queue_id);
-        }
-        this.$btn.uploadifySettings('scriptData', {name: fileName});
+        
+        self.ask_data(fileName, function(fileName, twitter) {
+            if (!fileName) {
+                self.$btn.uploadifyCancel(queue_id);
+            }
+            self.$btn.uploadifySettings('scriptData', {name: fileName, twitter: twitter});
+            self.$btn.uploadifyUpload();
+        });
     },
 
+    ask_data: function(fileName, callback) {
+        var namef = $('#js_askbox #js_name');
+        var twitf = $('#js_askbox #js_twitter')
+        namef.val(fileName);
+        twitf.val('');
+
+        $('#js_askbox').show();
+        $('#js_askbox .save').unbind('click');
+        $('#js_askbox .save').click(function() {
+            $('#js_askbox').hide();
+            if (callback) {
+                callback(namef.val(), twitf.val());
+            }
+        });
+    },
+    
     on_complete: function(event, queue_id, file_obj, response, data) {
         try {
             var $container = $('#' + this.$btn.attr('id') + queue_id);
@@ -303,9 +339,8 @@ var Playlist = {
 
     render_li: function(raw_data, pos) {
         var li = this.li_template,
-            data = raw_data,
-            l = data['length'];
-        data['length'] = Math.floor(l/60) + ':' + l % 60;
+            data = raw_data;
+        data['length'] = utils.print_time(data['length']);
         data['odd'] = pos % 2 == 0 ? 'odd' : 'even';
         for (var datakey in data) {
             li = li.replace('%' + datakey + '%', data[datakey]);
@@ -417,8 +452,7 @@ var NowPlaying = {
     render: function(raw_data) {
         var div = this.template;
         data = raw_data;
-        var l = data['length'];
-        data['length_m'] = Math.floor(l/60) + ':' + l % 60;
+        data['length_m'] = utils.print_time(data['length']);
         for (var datakey in data) {
             div = div.replace('%' + datakey + '%', data[datakey]);
         }
