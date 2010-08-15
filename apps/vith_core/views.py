@@ -24,7 +24,7 @@ def tracks(request):
     Return list of all uploaded tracks in json format
     """
     tracks = Track.objects.filter(play_time__gte=datetime.datetime.now())
-    
+
     data = []
     for track in tracks:
         tdict = track.as_dict()
@@ -132,21 +132,21 @@ def vote(request):
     track = get_object_or_404(Track, pk=request.POST.get('track_id'))
     if not track.can_vote():
         raise Exception('Can\'t vote for coming soon tracks.')
-    
+
     ip = request.META.get('REMOTE_ADDR', None)
-    
+
     if not Vote.objects.can_vote(ip, track):
         raise Exception('You already voted from this ip for this track.')
-    
+
     vote = Vote.objects.create(track=track, ip=ip)
     result = 'ok'
 
     if track.votes_count >= DELETE_THRESHOLD:
-        track.delete()     
+        track.delete()
         result = 'delete'
-        
+
     return {'result': result}
-    
+
 
 def twitter_notify_now_playing(track, next_track):
     if TWITTER_USERNAME and TWITTER_PASSWORD:
