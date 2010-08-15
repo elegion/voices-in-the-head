@@ -111,6 +111,8 @@ VLC_TELNET_HOST = 'alarin.ru'
 VLC_TELNET_PORT = 4444
 VLC_TELNET_PASSWORD = 's3cr3t'
 
+DEFAULT_FILE_STORAGE = 'core.storage.TransliteratedStorage'
+
 try:
     from settings_local import *
 except:

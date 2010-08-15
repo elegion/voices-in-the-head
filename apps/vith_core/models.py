@@ -31,6 +31,15 @@ class TrackManager(models.Manager):
         except IndexError:
             raise Track.DoesNotExist
 
+    def get_by_url(self, url):
+        filename = url.rpartition('/')[2]
+        base_path = self.model._meta.get_field_by_name('track_file')[0].upload_to
+        path = os.path.join(base_path, filename)
+        try:
+            return self.get_query_set().filter(track_file=path)[0]
+        except IndexError:
+            raise Track.DoesNotExist
+
 
 class Track(models.Model):
     track_file = AudioFileField(format='mp3', bitrate=196,
@@ -86,6 +95,12 @@ class Track(models.Model):
         super(Track, self).save(*args, **kwargs)
 
 
+class TrackNotified(models.Model):
+    track = models.OneToOneField(Track)
+    twitter_now = models.BooleanField(default=False)
+    twitter_uploader = models.BooleanField(default=False)
+    
+
 class VoteManager(models.Manager):
     def can_vote(self, ip, track):
         return self.get_query_set().filter(ip=ip, track=track).count() == 0
@@ -113,9 +128,10 @@ def update_remote_playlist(sender, instance, created, **kwargs):
         try:
             rc.connect(password=settings.VLC_TELNET_PASSWORD)
             rc.add_input(instance.track_file.url)
-            rc.close()
         except Exception, e:
             mail_admins('Error while connecting to Vlc telnet!', e, fail_silently=True)
+        finally:
+            rc.close()
 
 
 def update_votes_count(sender, instance, created, **kwargs):

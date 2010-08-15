@@ -2,17 +2,21 @@ import datetime
 import logging
 
 from django.conf import settings
+from django.core.mail import mail_admins
 from django.shortcuts import get_object_or_404, render_to_response
 
 from core import json_view, JsonResponse
 from vith_core.forms import UploadForm
-from vith_core.models import Track, Vote
+from vith_core.models import Track, Vote, TrackNotified
+from vlc_rc import rc as vlc_rc
 
 
 logger = logging.getLogger('vith_core')
 
 
 DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 5)
+TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
+TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
 
 
 def tracks(request):
@@ -35,10 +39,9 @@ def tracks(request):
     return JsonResponse(data)
 
 
-def now_playing(request):
+def _now_playing_fallback(request):
     """
-    Returns current track and now playing position
-    FIXME synchronize with audio streamer
+    Fallback when vlc got broken.
     """
     now = datetime.datetime.now()
     try:
@@ -55,6 +58,47 @@ def now_playing(request):
         tdata = curr_track.as_dict()
         tdata['position'] = curr_pos
         data = [tdata]
+
+    return data, curr_track
+
+
+def now_playing(request):
+    """
+    Returns current track and now playing position.
+    """
+    data = []
+
+    iface = vlc_rc.VlcRC().get(vlc_rc.INTERFACE_TELNET)
+    rc = iface(host=settings.VLC_TELNET_HOST, port=settings.VLC_TELNET_PORT)
+    try:
+        rc.connect(password=settings.VLC_TELNET_PASSWORD)
+        url, percentage = rc.now_playing()
+    except Exception, e:
+        mail_admins('Error while connecting to Vlc telnet!', e, fail_silently=True)
+    else:
+        if url and percentage is not None:
+            current_track = Track.objects.get_by_url(url)
+            if current_track:
+                data = [current_track.as_dict()]
+                data[0]['position'] = int(current_track.length * percentage)
+    finally:
+        rc.close()
+
+    if not data:
+        data, current_track = _now_playing_fallback(request)
+
+    if data:
+        tn = TrackNotified.objects.get_or_create(track=current_track)[0]
+        if not current_track.tracknotified.twitter_now:
+            next_track = Track.objects.filter(play_time__gt=current_track.play_time)\
+                .exclude(pk=current_track.pk).order_by('play_time')
+            if next_track:
+                next_track = next_track[0]
+
+            twitter_notify_now_playing(current_track, next_track)
+
+            tn.twitter_now = True
+            tn.save()
 
     return JsonResponse(data)
 
@@ -98,7 +142,22 @@ def vote(request):
     result = 'ok'
 
     if track.votes_count >= DELETE_THRESHOLD:
-        track.delete()
+        track.delete()     
         result = 'delete'
         
     return {'result': result}
+    
+
+def twitter_notify_now_playing(track, next_track):
+    if TWITTER_USERNAME and TWITTER_PASSWORD:
+        import twitter
+        api = twitter.Api(username=TWITTER_USERNAME, password=TWITTER_PASSWORD)
+
+        status = 'Now playing "%s"' % track.name[:30]
+        if track.uploader and track.uploader.twitter:
+            status += ' by @%s' % track.uploader.twitter
+        if next_track:
+            status += ', next one "%s"' % next_track.name[:30]
+            if next_track.uploader and next_track.uploader.twitter:
+                status += ' by @%s' % next_track.uploader.twitter
+        api.PostUpdate(status)

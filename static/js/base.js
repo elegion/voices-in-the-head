@@ -373,7 +373,6 @@ var NowPlaying = {
         self.$block = $('#now_playing');
 
         self.update();
-        setTimeout(function() {self.update()}, 1000);
     },
 
     update: function() {
@@ -460,7 +459,7 @@ var Tweets = {
         });
     },
 
-    template: '<li><img src="%profile_image_url%"></img>%text%<abbr class="timeago" title="%created_at%"></abbr></li>',
+    template: '<li><img src="%profile_image_url%" />%text%<abbr class="timeago" title="%created_at%"></abbr></li>',
 
     render: function(data) {
         var self = this;
@@ -473,5 +472,5 @@ var Tweets = {
             el = el.replace('%' + key  + '%', data[key]);
         }
         return $(el);
-    },
+    }
 }
