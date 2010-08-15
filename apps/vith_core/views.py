@@ -95,7 +95,10 @@ def now_playing(request):
             if next_track:
                 next_track = next_track[0]
 
-            twitter_notify_now_playing(current_track, next_track)
+            try:
+                twitter_notify_now_playing(current_track, next_track)
+            except Exception, e:
+                mail_admins('Error while Tweeting', e, fail_silently=True)
 
             tn.twitter_now = True
             tn.save()
