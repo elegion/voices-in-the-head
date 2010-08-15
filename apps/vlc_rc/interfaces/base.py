@@ -5,6 +5,9 @@ class Interface(object):
     def connect(self):
         raise NotImplementedError
 
+    def close(self):
+        raise NotImplementedError
+
     def add_broadcast(self, name):
         raise NotImplementedError
 

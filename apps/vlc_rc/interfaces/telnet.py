@@ -32,6 +32,9 @@ class Interface(base.Interface):
                 raise InvalidPasswordException
         self.name = self.add_broadcast()
 
+    def close(self):
+        self.telnet.close()
+
     def add_broadcast(self, name='bcast'):
         self._write('new %s broadcast enabled' % name)
         return name
