@@ -41,7 +41,7 @@ class Interface(base.Interface):
 
     def add_input(self, path):
         self._write('setup %s input %s' % (self.name, path))
-        if not self.playing():
+        if not self._playing():
             self._write('control %s play' % self.name)
 
     def _playing(self):
