@@ -1,1 +1,20 @@
 Django Dash repository for e-Legion team.
+
+
+Our project is called "Voices in the Head". Basically it is online user
+generated radio, broadcasted to a chosen one with webcam.
+
+For streaming it uses two external streaming servers:
+
+ * One for video (which is outsourced to some video streamer, currently
+   ustream.tv); it streams the video feed from the cam of "chosen one".
+   Also, the chosen one adds to that video stream an audio track of the uploaded
+   files.
+
+ * The second one is for streaming the uploaded audios to the "chosen one". It
+   receives the urls of tracks uploaded to web-app server and streams them via
+   http protocol. Therefore this server (we are using Vlc on our server) should
+   have an access to the server, which hosts the Django application. So, if you
+   are running our application on your sever, it should be HTTP accessible from
+   the outer world.
+
