@@ -2,4 +2,4 @@
 .idea
 *.sqlite
 settings_local.py
-
+venv_manage.py

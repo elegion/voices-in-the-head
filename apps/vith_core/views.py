@@ -14,7 +14,7 @@ from vlc_rc import rc as vlc_rc
 logger = logging.getLogger('vith_core')
 
 
-DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 5)
+DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 1)
 TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
 TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
 
@@ -24,7 +24,7 @@ def tracks(request):
     Return list of all uploaded tracks in json format
     """
     tracks = Track.objects.filter(play_time__gte=datetime.datetime.now())
-    
+
     data = []
     for track in tracks:
         tdict = track.as_dict()
@@ -135,21 +135,26 @@ def vote(request):
     track = get_object_or_404(Track, pk=request.POST.get('track_id'))
     if not track.can_vote():
         raise Exception('Can\'t vote for coming soon tracks.')
-    
+
     ip = request.META.get('REMOTE_ADDR', None)
-    
+
     if not Vote.objects.can_vote(ip, track):
         raise Exception('You already voted from this ip for this track.')
-    
+
     vote = Vote.objects.create(track=track, ip=ip)
+    votes_count = track.votes_count + 1
     result = 'ok'
 
-    if track.votes_count >= DELETE_THRESHOLD:
-        track.delete()     
+    if votes_count >= DELETE_THRESHOLD:
+        # Note: get url before deleting a track, or file is being destroyed
+        # and url cannot be calculated.
+        url = track.track_file.url
+        track.delete()
+        _delete_from_remote_playlist(url)
         result = 'delete'
-        
+
     return {'result': result}
-    
+
 
 def twitter_notify_now_playing(track, next_track):
     if TWITTER_USERNAME and TWITTER_PASSWORD:
@@ -164,3 +169,15 @@ def twitter_notify_now_playing(track, next_track):
             if next_track.uploader and next_track.uploader.twitter:
                 status += ' by @%s' % next_track.uploader.twitter
         api.PostUpdate(status)
+
+
+def _delete_from_remote_playlist(url):
+    iface = vlc_rc.VlcRC().get(vlc_rc.INTERFACE_TELNET)
+    rc = iface(host=settings.VLC_TELNET_HOST, port=settings.VLC_TELNET_PORT)
+    try:
+        rc.connect(password=settings.VLC_TELNET_PASSWORD)
+        rc.remove_input(url)
+    except Exception, e:
+        mail_admins('Error while connecting to Vlc telnet!', e, fail_silently=True)
+    finally:
+        rc.close()
