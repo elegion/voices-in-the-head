@@ -12,6 +12,10 @@ $(function(){
     Tweets.init();
 });
 
+function site_url() {
+    return document.location.protocol + '//' + document.location.host;
+}
+
 function setStatus_RP(str,num) {
     if (num == Recorder.LOADED) {
         Recorder.start();
@@ -46,7 +50,7 @@ var Recorder = {
             '<applet code="RPApplet.class" archive="/js/RPAppletMp3.jar" codebase="." align="MIDDLE" width=374 height=24 name="RPApplet" mayscript>'
             + '<param name="cabbase" value="/js/RPAppletMp3.cab">'
             + '<param name="Registration" value="demo">'
-            + '<param name="ServerScript" value="http://localhost:8000/upload/">'
+            + '<param name="ServerScript" value="' + site_url() + '/upload/">'
             + '<param name="OverRecord" value="true">'
             + '<PARAM NAME = "VoiceServerFolder"	VALUE = ".">'
             + '<PARAM NAME = "TimeLimit"	VALUE = "1800">'
