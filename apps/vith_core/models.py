@@ -103,6 +103,8 @@ class TrackNotified(models.Model):
 
 class VoteManager(models.Manager):
     def can_vote(self, ip, track):
+        if not ip:
+            return False
         return self.get_query_set().filter(ip=ip, track=track).count() == 0
 
 
