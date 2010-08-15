@@ -14,7 +14,7 @@ from vlc_rc import rc as vlc_rc
 logger = logging.getLogger('vith_core')
 
 
-DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 5)
+DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 1)
 TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
 TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
 
