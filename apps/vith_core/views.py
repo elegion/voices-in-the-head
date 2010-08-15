@@ -143,7 +143,11 @@ def vote(request):
     result = 'ok'
 
     if votes_count >= DELETE_THRESHOLD:
+        # Note: get url before deleting a track, or file is being destroyed
+        # and url cannot be calculated.
+        url = track.track_file.url
         track.delete()
+        _delete_from_remote_playlist(url)
         result = 'delete'
 
     return {'result': result}
@@ -162,3 +166,15 @@ def twitter_notify_now_playing(track, next_track):
             if next_track.uploader and next_track.uploader.twitter:
                 status += ' by @%s' % next_track.uploader.twitter
         api.PostUpdate(status)
+
+
+def _delete_from_remote_playlist(url):
+    iface = vlc_rc.VlcRC().get(vlc_rc.INTERFACE_TELNET)
+    rc = iface(host=settings.VLC_TELNET_HOST, port=settings.VLC_TELNET_PORT)
+    try:
+        rc.connect(password=settings.VLC_TELNET_PASSWORD)
+        rc.remove_input(url)
+    except Exception, e:
+        mail_admins('Error while connecting to Vlc telnet!', e, fail_silently=True)
+    finally:
+        rc.close()
