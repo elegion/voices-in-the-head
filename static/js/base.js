@@ -220,7 +220,6 @@ var NowPlaying = {
         self.$block = $('#now_playing');
 
         self.update();
-        setTimeout(function() {self.update()}, 1000);
     },
     
     update: function() {
