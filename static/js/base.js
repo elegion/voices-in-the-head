@@ -286,8 +286,8 @@ var Playlist = {
 
     update_playlist: function() {
         var self = this;
-        $.get('/tracks/', function(data) {
-            var tracks = eval('[' + data + ']')[0];
+        $.getJSON('/tracks/', function(data) {
+            var tracks = data[0];
             self.fill_playlist(tracks);
             self.$loader.hide();
             self.$playlist.show();
