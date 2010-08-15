@@ -5,4 +5,5 @@ urlpatterns = patterns('vith_core.views',
     url('^tracks/$', 'tracks'),
     url('^now_playing/$', 'now_playing'),
     url('^upload/$', 'upload'),    
+    url('^vote/$', 'vote')
 )

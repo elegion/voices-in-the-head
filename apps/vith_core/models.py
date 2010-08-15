@@ -11,8 +11,9 @@ from core import datetime_to_timestamp
 from core.dbfields import AudioFileField
 
 
-MAX_LENGTH = getattr(settings, 'MAX_TRACK_LENGTH', 5 * 60)
-NORMALIZE = getattr(settings, 'TRACK_NORMALIZE', -6)
+MAX_LENGTH = getattr(settings, 'MAX_TRACK_LENGTH', 5 * 60) #dont used
+NORMALIZE = getattr(settings, 'TRACK_NORMALIZE', -6) #dont used
+NON_EDIT_TIME = getattr(settings, 'NON_EDIT_TIME', 300) #sec
 
 
 class Uploader(models.Model):
@@ -52,6 +53,8 @@ class Track(models.Model):
     play_time = models.DateTimeField(null=True, blank=True)
     uploaded = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
+    votes_count = models.PositiveSmallIntegerField(default=0)
+    
     objects = TrackManager()
 
     class Meta(object):
@@ -69,6 +72,9 @@ class Track(models.Model):
         tdict['play_time'] = datetime_to_timestamp(tdict['play_time'])
         return tdict
 
+    def can_vote(self):
+        return self.play_time > datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME)
+        
     def save(self, *args, **kwargs):
         """
         Calc playtime on track saving.
@@ -89,6 +95,28 @@ class Track(models.Model):
         super(Track, self).save(*args, **kwargs)
 
 
+class TrackNotified(models.Model):
+    track = models.OneToOneField(Track)
+    twitter_now = models.BooleanField(default=False)
+    twitter_uploader = models.BooleanField(default=False)
+    
+
+class VoteManager(models.Manager):
+    def can_vote(self, ip, track):
+        return self.get_query_set().filter(ip=ip, track=track).count() == 0
+    
+    
+class Vote(models.Model):
+    track = models.ForeignKey(Track)
+    ip = models.IPAddressField()
+    created = models.DateTimeField(auto_now_add=True)
+    
+    objects = VoteManager()
+    
+    class Meta:
+        unique_together = ('track', 'ip')
+
+
 def update_remote_playlist(sender, instance, created, **kwargs):
     """
     Enque the track into the Vlc playlist via full URL.
@@ -106,4 +134,10 @@ def update_remote_playlist(sender, instance, created, **kwargs):
             rc.close()
 
 
+def update_votes_count(sender, instance, created, **kwargs):
+    if sender == Vote and instance:
+        Track.objects.filter(pk=instance.track.pk).update(votes_count=models.F('votes_count') + 1)
+
+    
 models.signals.post_save.connect(update_remote_playlist, sender=Track)
+models.signals.post_save.connect(update_votes_count, sender=Vote)

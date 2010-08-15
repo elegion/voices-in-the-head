@@ -1,11 +1,74 @@
 $(function(){
     Uploader.init();
 
+    Recorder.init();
+
     Player.init();
 
     Playlist.init();
+    
     NowPlaying.init();
+    
+    Tweets.init();
 });
+
+var Recorder = {
+    MAX_TRACK_LEN: 20000, /* in milliseconds */
+
+    /** @type HTMLAppletElement */
+    _applet: null,
+    /** @type handler */
+    _stop_timeout: null,
+
+    init: function() {
+        $('#btn_rec').click(function() {
+            Recorder.rec();
+        })
+    },
+
+    rec: function() {
+        if (!this._applet) {
+            $('#layout_footer').append(
+                '<applet code="RPApplet.class" archive="/js/RPAppletMp3.jar" codebase="." align="MIDDLE" width=374 height=1 name="RPApplet" mayscript>'
+                + '<param name="cabbase" value="/js/RPAppletMp3.cab">'
+                + '<param name="Registration" value="demo">'
+                + '<param name="ServerScript" value="/upload/">'
+                + '<param name="VoiceServerFolder" value="">'
+                + '<param name="TimeLimit" value="1800">'
+                + '<param name="BlockSize" value="10240">'
+                + '<param name="InterfaceType" value="JS">'
+                + '<param name="UserServerFolder" value="">'
+                + '<param name="UserPostVariables" value="name">'
+                + '<param name="Sampling_frequency" value="22050">'
+                + '<param name="Bitrate" value="64">'
+                + '<param name="backgroudColor" value="c0c0c0">'
+                + '<param name="indicatorLevel1" value="4664f0">'
+                + '<param name="indicatorLevel2" value="28c814">'
+                + '<param name="indicatorLevel3" value="f03250">'
+                + '</applet>'
+            );
+            this._applet = document.RPApplet;
+        }
+        this._applet.RECORD();
+        this._stop_timeout = setTimeout(function() {
+            Recorder.stop();
+        }, this.MAX_TRACK_LEN);
+    },
+
+    stop: function() {
+        if (this._stop_timeout) {
+            this._stop_timeout = clearTimeout(this._stop_timeout);
+        }
+
+        this._applet.STOP_RP();
+        var file_name = prompt('Please, enter track name:', '');
+        if (!file_name) {
+            return;
+        }
+        this._applet.SETPARAMETER('name', file_name);
+        this._applet.UPLOAD('voice');
+    }
+}
 
 var Uploader = {
     $btn: null,
@@ -157,7 +220,7 @@ var Playlist = {
     li_template: '<li class="%odd%" id="track_%id%">\
         <a class="control play_pause"></a>\
         <span class="track">%name%<span class="progress"><span></span></span><q></q></span>\
-        <a class="control delete" title="Vote againist this track"></a>\
+        <a class="control delete %voted%" title="Vote against this track"></a>\
         <span class="duration">%length%</span>\
     </li>',
 
@@ -176,6 +239,23 @@ var Playlist = {
         li.find('.control.play_pause').click(function(){
             Player.toggle(li, raw_data.track_file);
         });
+        li.find('.control.delete').click(function() {
+            var self = this;
+            $.post('/vote/', {'track_id': raw_data.id}, function(data) {
+                var data = eval('('+ data + ')');
+                if (data['error']) {
+                    alert(data['error']);
+                } else if (data['result'] == 'delete') {
+                    li.remove();
+                } else if (data['result'] == 'ok') {
+                    $(self).addClass('voted');
+                }
+            });
+        });
+        
+        if (!raw_data.can_vote) {
+            li.find('.delete').remove();
+        }
         return li;
     },
 
@@ -227,7 +307,10 @@ var NowPlaying = {
         
         if (self._cur_track && self._cur_track.pos_p <= 99) {
             self._cur_track.position += (new Date().getTime() - self._last_time) / 1000;
-            self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track.length * 100);
+            self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track['length'] * 100);
+            if (!self._cur_track.pos_p) {
+                self._cur_track.pos_p = 0;
+            }
             $('.progress', self.$block).css('width', self._cur_track.pos_p + '%');
             setTimeout(function() {self.update()}, 1000);
 
@@ -256,18 +339,65 @@ var NowPlaying = {
     
     template: '<div id="track_%id%">\
         <span class="track">%name%<q></q></span>\
-        <span class="duration">%length%</span>\
+        <span class="duration">%length_m%</span>\
         <div class="progress" style="width: %pos_p%%;"></div>\
     </div>',
     
     render: function(raw_data) {
-        div = this.template;
+        var div = this.template;
         data = raw_data;
         var l = data['length'];
-        data['length'] = Math.floor(l/60) + ':' + l % 60;
+        data['length_m'] = Math.floor(l/60) + ':' + l % 60;
         for (var datakey in data) {
             div = div.replace('%' + datakey + '%', data[datakey]);
         }
         return $(div);        
     }
 };
+
+
+var Tweets = {
+    api_q: '#inthehead',
+    api_rpp: 20,
+    api_url: 'http://search.twitter.com/search.json',
+    $container: null,
+    
+    init: function() {
+        var self = this;
+        self._last_id = 0;
+        
+        self.$container = $('#js_tweets');
+        
+        self.update();
+        setInterval(function() {self.update()}, 10000);
+    },
+    
+    update: function() {
+        var self = this;
+        
+        $.getJSON(self.api_url + '?callback=?',
+            {'rpp': self.api_rpp, 'q': self.api_q, 'since_id': self._last_id}, function(data){
+                self._last_id = data.max_id;
+                for(var i=data.results.length - 1; i >= 0; i--) {
+                    self.$container.prepend(self.render(data.results[i]));
+                }
+                self.$container.find('li:gt(' + (self.api_rpp - 1) + ')').remove();
+                $('abbr.timeago').timeago();
+        });
+    },
+    
+    template: '<li><img src="%profile_image_url%"></img>%text%<abbr class="timeago" title="%created_at%"></abbr></li>',
+    
+    render: function(data) {
+        var self = this;
+        
+        data['text'] = data['text'].replace(/@([0-9a-zA-Z_]+)/g, '<a href="http://twitter.com/$1">@$1</a>')
+        data['text'] = data['text'].replace(/(#[0-9a-zA-Z_]+)/g, '<a href="http://twitter.com/search?q=$1">$1</a>')
+        
+        el = self.template;
+        for (key in data) {            
+            el = el.replace('%' + key  + '%', data[key]);
+        }
+        return $(el);
+    },
+}

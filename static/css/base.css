@@ -27,6 +27,10 @@ strong {
     margin: 10px 0;
     overflow: hidden;
 }
+    #layout_header .info {
+        float: right;
+        margin: 30px;
+    }
     #layout_header .logo {
         width: 200px;
         height: 71px;
@@ -41,8 +45,9 @@ strong {
     overflow: hidden;
 }
 #layout_footer {
-    margin: 10px 0;
+    margin: 4em 0 10px 0;
     text-align: center;
+    font-size: 70%;
 }
 
 /*  3. Main page */
@@ -174,7 +179,7 @@ strong {
         background-image: url(../imgs/btn_delete.png);
         float: right;
     }
-        .playlist .delete:hover {
+        .playlist .delete:hover, .playlist .delete.voted {
             background-image: url(../imgs/btn_delete_hover.png);
         }
 
@@ -211,3 +216,35 @@ strong {
 .uploadifyQueue {
     position: absolute;
 }
+
+.tweetus {
+    margin: 1em auto 0 auto;
+    width: 300px;
+    display: block;
+}
+.tweets {
+    width: 40em;
+    font-size: 80%;
+    margin: 1em auto 0 auto;
+}
+    .tweets li {
+        clear: both;
+        margin: 0 0 2em 0;
+    }
+        .tweets abbr {
+            display: block;
+            color: #AAA;
+            font-style: italic;
+        }
+        .tweets img {
+            width: 32px;
+            height: 32px;
+            float: left;
+            margin: 0 0.5em 2em 0;
+        }
+        .tweets a {
+            color: #AAA;
+        }
+        .tweets a:hover {
+            color: #666;
+        }

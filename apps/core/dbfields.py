@@ -1,11 +1,12 @@
+from io import BytesIO
+
 from django.db import models
 from django.db.models.fields.files import FieldFile
 from django import forms
 from django.core.files import File
-from django.core import signals
 from django.utils.translation import ugettext_lazy as _
 
-from hachoir_parser import createParser, guessParser
+from hachoir_parser import guessParser
 from hachoir_metadata import extractMetadata
 from hachoir_core.stream import InputIOStream
 
@@ -24,20 +25,19 @@ class AudioField(forms.FileField):
             file = open(data.temporary_file_path(), 'rb')
         else:
             if hasattr(data, 'read'):
-                file = StringIO(data.read())
+                file = BytesIO(data.read())
             else:
-                file = StringIO(data['content'])
+                file = BytesIO(data['content'])
 
         try:            
             parser = guessParser(InputIOStream(file))
-            parser.validate()
-            
-            if not (parser.validate() or parser.mime_type != u'audio/mpeg'):
+
+            if not (parser.validate() and parser.mime_type == u'audio/mpeg'):
                 raise Exception
         except ImportError:
             raise
         except Exception: #not an mp3
-            raise ValidationError(self.error_messages['invalid_image'])
+            raise forms.ValidationError(self.error_messages['invalid_format'])
         if hasattr(f, 'seek') and callable(f.seek):
             f.seek(0)
         return f
