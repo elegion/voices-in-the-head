@@ -18,7 +18,7 @@ class Interface(base.Interface):
     TIME = 'time : '
     POSITION = 'position : '
     INDEX = 'playlistindex : '
-    int_regex = re.compile(r'.*(\d+).*')
+    int_regex = re.compile(r'[^\d]*(\d+)[^\d]*')
 
     def __init__(self, host, port):
         self.host = host
