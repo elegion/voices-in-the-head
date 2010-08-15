@@ -4,3 +4,5 @@ Django==1.2.1
 hachoir-metadata
 hachoir-parser
 hachoir-core
+
+python-twitter==0.6

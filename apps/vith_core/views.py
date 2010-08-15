@@ -6,13 +6,15 @@ from django.shortcuts import get_object_or_404
 
 from core import json_view, JsonResponse
 from vith_core.forms import UploadForm
-from vith_core.models import Track, Vote
+from vith_core.models import Track, Vote, TrackNotified
 
 
 logger = logging.getLogger('vith_core')
 
 
 DELETE_THRESHOLD = getattr(settings, 'DELETE_THRESHOLD', 5)
+TWITTER_USERNAME = getattr(settings, 'TWITTER_USERNAME', None)
+TWITTER_PASSWORD = getattr(settings, 'TWITTER_PASSWORD', None)
 
 
 def tracks(request):
@@ -55,6 +57,20 @@ def now_playing(request):
         tdata = curr_track.as_dict()
         tdata['position'] = curr_pos
         data = [tdata]
+        
+        tn = TrackNotified.objects.get_or_create(track=curr_track)
+        if tn:
+            tn = tn[0]
+        if not tn or not curr_track.tracknotified.twitter_now:
+            next_track = Track.objects.filter(play_time__gt=curr_track.play_time)\
+                .exclude(pk=curr_track.pk).order_by('play_time')
+            if next_track:
+                next_track = next_track[0]
+                
+            twitter_notify_now_playing(curr_track, next_track)
+            
+            tn.twitter_now = True
+            tn.save()
 
     return JsonResponse(data)
 
@@ -93,7 +109,22 @@ def vote(request):
     result = 'ok'
 
     if track.votes_count >= DELETE_THRESHOLD:
-        track.delete()
+        track.delete()     
         result = 'delete'
         
     return {'result': result}
+    
+
+def twitter_notify_now_playing(track, next_track):
+    if TWITTER_USERNAME and TWITTER_PASSWORD:
+        import twitter
+        api = twitter.Api(username=TWITTER_USERNAME, password=TWITTER_PASSWORD)
+
+        status = 'Now playing "%s"' % track.name[:30]
+        if track.uploader and track.uploader.twitter:
+            status += ' by @%s' % track.uploader.twitter
+        if next_track:
+            status += ', next one "%s"' % next_track.name[:30]
+            if next_track.uploader and next_track.uploader.twitter:
+                status += ' by @%s' % next_track.uploader.twitter
+        api.PostUpdate(status)

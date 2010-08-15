@@ -86,6 +86,12 @@ class Track(models.Model):
         super(Track, self).save(*args, **kwargs)
 
 
+class TrackNotified(models.Model):
+    track = models.OneToOneField(Track)
+    twitter_now = models.BooleanField(default=False)
+    twitter_uploader = models.BooleanField(default=False)
+    
+
 class VoteManager(models.Manager):
     def can_vote(self, ip, track):
         return self.get_query_set().filter(ip=ip, track=track).count() == 0
