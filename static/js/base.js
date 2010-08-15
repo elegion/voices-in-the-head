@@ -307,10 +307,7 @@ var NowPlaying = {
         
         if (self._cur_track && self._cur_track.pos_p <= 99) {
             self._cur_track.position += (new Date().getTime() - self._last_time) / 1000;
-            self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track['length'] * 100);
-            if (!self._cur_track.pos_p) {
-                self._cur_track.pos_p = 0;
-            }
+            self._cur_track.pos_p = Math.floor(self._cur_track.position / self._cur_track.length * 100);
             $('.progress', self.$block).css('width', self._cur_track.pos_p + '%');
             setTimeout(function() {self.update()}, 1000);
 
