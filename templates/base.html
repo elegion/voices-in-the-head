@@ -25,42 +25,9 @@
     <div id="layout_main">
         <div id="layout_header"><a href="/" class="logo"></a><div class="info">Online user generated radio, broadcasted to a chosen one with webcam.</div>
         </div>
-        
-        <div class="ask_box" id="js_askbox">            
-            <div class="f_row"><label>Track name</label>
-            <input type="text" id="js_name" name="name"></div>
-            
-            <div class="f_row"><label>Twitter name (send notify before play track)</label>
-            @<input type="text" id="js_twitter" name="twitter"></div>
-            
-            <div class="f_row"><input type="button" value="save" class="save"></div>
-        </div>
-        
-        
-        <div id="layout_content">
-            <div class="player_wrapper">
-                <object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" width="400" height="320" id="utv226502"><param name="flashvars" value="autoplay=false&amp;brand=embed&amp;cid=5354189&amp;locale=en_US"/><param name="allowfullscreen" value="true"/><param name="allowscriptaccess" value="always"/><param name="movie" value="http://www.ustream.tv/flash/live/1/5354189"/><embed flashvars="autoplay=false&amp;brand=embed&amp;cid=5354189&amp;locale=en_US" width="400" height="320" allowfullscreen="true" allowscriptaccess="always" id="utv226502" name="utv_n_254625" src="http://www.ustream.tv/flash/live/1/5354189" type="application/x-shockwave-flash" /></object>
-            </div>
-            
-            <div class="playlist_wrapper" id="js_playlist_wrapper">
-                <div class="ajax_loader"></div>
-                <ul class="playlist" id="js_playlist"></ul>
-            </div>
 
-            <div id="now_playing"></div>
-
-            <div class="upload_controls">
-                <a id="btn_upload" class="upload"></a><a id="btn_rec" class="rec"></a>
-                <div id="record_progress" class="record_progress"><div></div></div>
-            </div>
-            
-            <a href="http://twitter.com/inthehead" title="tweet us!"><img class="tweetus" src="/imgs/tweetus.png" alt="Tweet us #inthehead" /></a>
-            <ul>
-                <li class="tweets" id="js_tweets">
-                </li>
-            </ul>
-        </div>
-
+        {% block body %}{% endblock %}
+        
         <div id="layout_footer">
             &copy; 2010, <a href="http://e-legion.com">e-Legion ltd.</a>, Anatoly Larin, Dmitry Medvinsky, Vladimir Lyukov.
             <div id="jquery_jplayer"></div>

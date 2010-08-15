@@ -14,9 +14,10 @@ from vlc_rc import rc as vlc_rc
 logger = logging.getLogger('vith_core')
 
 
+@json_view
 def tracks(request):
     """
-    Return list of all uploaded tracks in json format
+    Return list of all unplayed tracks in json format
     """
     tracks = Track.objects.filter(play_time__gte=datetime.datetime.now())
 
@@ -31,18 +32,20 @@ def tracks(request):
             tdict['voted'] = 'voted'
         data.append(tdict)
 
-    return JsonResponse(data)
+    return data
 
 
 def _now_playing_fallback(request):
     """
-    Fallback when vlc got broken.
+    Fallback when vlc now_playing got broken.
+    
+    Work by comparison track's play time and datetime.now()
     """
     now = datetime.datetime.now()
     try:
         curr_track = Track.objects.current_track(now)
     except Track.DoesNotExist:
-        return JsonResponse([])
+        return [], None
 
     if curr_track:
         curr_pos = (now - curr_track.play_time).seconds
@@ -57,9 +60,12 @@ def _now_playing_fallback(request):
     return data, curr_track
 
 
+@json_view
 def now_playing(request):
     """
     Returns current track and now playing position.
+    
+    Connects to steaming server and asks this parameters.
     """
     data = []
 
@@ -98,7 +104,7 @@ def now_playing(request):
             tn.twitter_now = True
             tn.save()
 
-    return JsonResponse(data)
+    return data
 
 
 def upload(request):
@@ -156,11 +162,11 @@ def twitter_notify_now_playing(track, next_track):
         import twitter
         api = twitter.Api(username=TWITTER_USERNAME, password=TWITTER_PASSWORD)
 
-        status = 'Now playing "%s"' % track.name[:30]
+        status = 'Now playing "%s" (%d:%02d)' % (track.name[:30], track.length/60, track.length % 60)
         if track.uploader and track.uploader.twitter:
             status += ' by @%s' % track.uploader.twitter
         if next_track:
-            status += ', next one "%s"' % next_track.name[:30]
+            status += ', next one "%s" (%d:%02d)' % (next_track.name[:30], next_track.length/60, track.length %60)
             if next_track.uploader and next_track.uploader.twitter:
                 status += ' by @%s' % next_track.uploader.twitter
         api.PostUpdate(status)

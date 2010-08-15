@@ -1,14 +1,9 @@
 $(function(){
     Uploader.init();
-
     Recorder.init();
-
     Player.init();
-
-    Playlist.init();
-    
+    Playlist.init();    
     NowPlaying.init();
-
     Tweets.init();
 });
 
@@ -22,10 +17,11 @@ function setStatus_RP(str,num) {
     }
     window.console && window.console.debug(str,num);
 }
-function report_RP(s,num)
-{
+
+function report_RP(s,num) {
     alert(s);
 }
+
 function setTimer_RP(s)	{
 
 }
@@ -70,6 +66,7 @@ var Recorder = {
             + '<PARAM NAME = "TimeLimit"	VALUE = "1800">'
             + '<PARAM NAME = "UserServerFolder"	VALUE = ".">'
             + '<PARAM NAME = "UserPostVariables"	VALUE = "name">'
+            + '<PARAM NAME = "UserPostVariables"	VALUE = "twitter">'
             + '<PARAM NAME = "name"			VALUE = "voice">'
             + '<param name="BlockSize" value="1024000">'
             + '<param name="InterfaceType" value="JS">'
@@ -112,13 +109,14 @@ var Recorder = {
         this._applet.STOP_RP();
         this._progress.stop(); // If called before prompt, animation not shown
         
+        var self = this;
         Uploader.ask_data('', function(fileName, twitter) {
             if (!fileName) {
                 return;
             }
-            this._applet.SETPARAMETER('name', file_name);
-            this._applet.SETPARAMETER('twitter', twitter);
-            this._applet.UPLOAD('voice');            
+            self._applet.SETPARAMETER('name', fileName);
+            self._applet.SETPARAMETER('twitter', twitter);
+            self._applet.UPLOAD('voice');            
         });
         } catch(e) {
             alert(e)
@@ -322,8 +320,8 @@ var Playlist = {
 
     update_playlist: function() {
         var self = this;
-        $.get('/tracks/', function(data) {
-            var tracks = eval('[' + data + ']')[0];
+        $.getJSON('/tracks/', function(data) {
+            var tracks = data;
             self.fill_playlist(tracks);
             self.$loader.hide();
             self.$playlist.show();
@@ -354,7 +352,6 @@ var Playlist = {
         li.find('.control.delete').click(function() {
             var self = this;
             $.post('/vote/', {'track_id': raw_data.id}, function(data) {
-                var data = eval('('+ data + ')');
                 if (data['error']) {
                     alert(data['error']);
                 } else if (data['result'] == 'delete') {
@@ -362,7 +359,7 @@ var Playlist = {
                 } else if (data['result'] == 'ok') {
                     $(self).addClass('voted');
                 }
-            });
+            }, 'json');
         });
 
         if (!raw_data.can_vote) {
