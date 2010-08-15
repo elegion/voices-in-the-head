@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from vith_core.models import Track, NON_EDIT_TIME, DELETE_THRESHOLD
+from vith_core.models import Track, NON_EDIT_TIME
 
 
 class UploadTestCase(TestCase):
@@ -56,8 +56,19 @@ class UploadTestCase(TestCase):
 
 
 class VoteTestCase(TestCase):
+    def setUp(self):
+        self.old_setting = getattr(settings, 'DELETE_THRESHOLD', None)
+        settings.DELETE_THRESHOLD = 2
+        # Reload settings
+        from vith_core import views, models
+        reload(models)
+        reload(views)
+
+    def tearDown(self):
+        settings.DELETE_THRESHOLD = self.old_setting
+
     def vote_till_removed(self, track_id):
-        for i in xrange(DELETE_THRESHOLD):
+        for i in xrange(settings.DELETE_THRESHOLD):
             response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track_id}, REMOTE_ADDR=i+1)
             self.assertEquals(200, response.status_code)
         self.assertEquals('delete', response.data['result'])
@@ -74,3 +85,16 @@ class VoteTestCase(TestCase):
         expected_time = track2.play_time - datetime.timedelta(seconds=track1.length)
         track2 = Track.objects.get(pk=track2.pk)
         self.assertEquals(expected_time, track2.play_time)
+
+    def test_deletes(self):
+        track = Track.objects.create(name='Track 1',
+                                     play_time=datetime.datetime.now() + datetime.timedelta(seconds=NON_EDIT_TIME + 5),
+                                     length=10)
+
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=1)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('ok', response.data['result']) # not yet deleted
+
+        response = self.client.post(reverse('vith_core.views.vote'), {'track_id': track.pk}, REMOTE_ADDR=2)
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('delete', response.data['result'])
