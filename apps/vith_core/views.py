@@ -172,7 +172,8 @@ def twitter_notify_now_playing(track, next_track):
         if track.uploader and track.uploader.twitter:
             status += ' by @%s' % track.uploader.twitter
         if next_track:
-            status += ', next one "%s" (%d:%02d)' % (next_track.name[:30], next_track.length/60, track.length %60)
+            status += ', next one "%s" (%d:%02d)'\
+                % (next_track.name[:30], next_track.length/60, next_track.length % 60)
             if next_track.uploader and next_track.uploader.twitter:
                 status += ' by @%s' % next_track.uploader.twitter
                 
